@@ -1,0 +1,17 @@
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+venv/
+.env
+dataset/raw/*
+!dataset/raw/.gitkeep
+dataset/processed/*
+!dataset/processed/.gitkeep
+artifacts/model/*
+!artifacts/model/.gitkeep
+artifacts/evaluation/*
+!artifacts/evaluation/.gitkeep
+*.joblib
+.DS_Store
+
