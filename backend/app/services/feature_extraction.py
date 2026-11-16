@@ -27,8 +27,7 @@ def _parse_url(value: str):
         parsed, host, port = urlsplit(""), "", None
     return raw, parsed, host, port
 
-def extract_features(url: str) -> dict[str, int]:
-    """Extract numeric features without resolving or fetching the URL."""
+def _extract_all_features(url: str) -> dict[str, int]:
     raw, parsed, hostname, port = _parse_url(str(url))
     lowered = raw.casefold()
     try:
@@ -42,19 +41,49 @@ def extract_features(url: str) -> dict[str, int]:
     shortener = int(any(hostname == domain or hostname.endswith("." + domain) for domain in indicators["url_shorteners"]))
     authority = parsed.netloc.rsplit("@", 1)[-1]
     redirect_remainder = raw[raw.find("://") + 3:] if "://" in raw else raw
+    uses_https_val = int(parsed.scheme.casefold() == "https" or lowered.startswith("https://"))
+
     return {
-        "url_length": len(raw), "hostname_length": len(hostname), "path_length": len(parsed.path),
-        "query_length": len(parsed.query), "fragment_length": len(parsed.fragment), "count_dots": raw.count("."),
-        "count_hyphens": raw.count("-"), "count_underscores": raw.count("_"),
-        "count_digits": sum(char.isdigit() for char in raw), "count_special_characters": sum(not char.isalnum() for char in raw),
-        "count_at_symbols": raw.count("@"), "count_percent_symbols": raw.count("%"),
-        "count_subdomains": max(0, len(labels) - 2), "has_ip_address": is_ip,
+        # Standard 21 features
+        "url_length": len(raw),
+        "hostname_length": len(hostname),
+        "path_length": len(parsed.path),
+        "query_length": len(parsed.query),
+        "fragment_length": len(parsed.fragment),
+        "count_dots": raw.count("."),
+        "count_hyphens": raw.count("-"),
+        "count_underscores": raw.count("_"),
+        "count_digits": sum(char.isdigit() for char in raw),
+        "count_special_characters": sum(not char.isalnum() for char in raw),
+        "count_at_symbols": raw.count("@"),
+        "count_percent_symbols": raw.count("%"),
+        "count_subdomains": max(0, len(labels) - 2),
+        "has_ip_address": is_ip,
         "has_punycode": int("xn--" in hostname),
         "has_port": int(port is not None or (":" in authority and not authority.startswith("["))),
-        "uses_https": int(parsed.scheme.casefold() == "https"),
-        "has_suspicious_keyword": int(keyword_count > 0), "suspicious_keyword_count": keyword_count,
-        "has_url_shortener": shortener, "has_double_slash_redirect_pattern": int("//" in redirect_remainder),
+        "uses_https": uses_https_val,
+        "has_suspicious_keyword": int(keyword_count > 0),
+        "suspicious_keyword_count": keyword_count,
+        "has_url_shortener": shortener,
+        "has_double_slash_redirect_pattern": int("//" in redirect_remainder),
+
+        # 11-feature model compatibility aliases
+        "count_dot": raw.count("."),
+        "count_hyphen": raw.count("-"),
+        "count_at": raw.count("@"),
+        "count_question": raw.count("?"),
+        "count_equal": raw.count("="),
+        "count_slash": raw.count("/"),
+        "has_https": uses_https_val,
+        "has_ip": is_ip,
+        "suspicious_words": keyword_count,
     }
+
+def extract_features(url: str, feature_names: list[str] | None = None) -> dict[str, int]:
+    """Extract numeric features without resolving or fetching the URL."""
+    all_features = _extract_all_features(url)
+    target_names = feature_names if feature_names is not None else FEATURE_NAMES
+    return {name: all_features.get(name, 0) for name in target_names}
 
 def extract_feature_vector(url: str) -> list[int]:
     return list(extract_features(url).values())
