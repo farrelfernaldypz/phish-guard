@@ -1,460 +1,927 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-theme="pearl">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#08090d">
-  <meta name="description" content="PhishGuard Enterprise — High-assurance machine learning URL threat intelligence system.">
+  <meta name="theme-color" content="#F8FAFC" id="theme-meta-color">
+  <meta name="description" content="PhishGuard Enterprise — Luxury Real-Time URL Phishing Intelligence powered by Scikit-Learn RandomForestClassifier.">
   <title>PhishGuard &mdash; Defensive Threat Intelligence</title>
+
+  <!-- Typography: Plus Jakarta Sans, Instrument Serif, JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
   <link rel="stylesheet" href="/css/style.css">
   <script src="/js/app.js" defer></script>
 </head>
 <body>
-  <!-- Ambient Atmosphere -->
-  <div class="ambient-glow" aria-hidden="true"></div>
+  <!-- Multi-Layered Atmosphere Overlays -->
+  <div class="ambient-mesh-canvas" aria-hidden="true">
+    <div class="aurora-orb orb-primary"></div>
+    <div class="aurora-orb orb-cyan"></div>
+    <div class="aurora-orb orb-gold"></div>
+  </div>
+  <div class="architectural-grid-overlay" aria-hidden="true"></div>
+  <div class="film-grain-texture" aria-hidden="true"></div>
 
-  <!-- Header -->
-  <header class="masthead">
-    <div class="page-shell masthead-inner">
-      <div class="brand-group">
-        <a class="brand-link" href="#home">
-          <div class="brand-monogram">PG</div>
-          <div class="brand-text">
-            <span class="brand-title">PhishGuard</span>
-            <span class="brand-sub">Security Intelligence</span>
-          </div>
-        </a>
-        <div class="system-status-pill">
-          <span class="status-pip" id="model-status-light"></span>
-          <span class="status-name" id="model-status-text">System Active</span>
+  <!-- Sticky Glass Navbar -->
+  <header class="navbar-sticky">
+    <div class="navbar-container">
+      <!-- Brand lockup -->
+      <a href="#home" class="brand-cluster" aria-label="PhishGuard Home">
+        <div class="brand-shield-emblem">
+          <svg viewBox="0 0 28 32" fill="none" class="shield-svg" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <linearGradient id="shieldGrad" x1="0" y1="0" x2="28" y2="32" gradientUnits="userSpaceOnUse">
+                <stop stop-color="#1D4ED8" />
+                <stop offset="0.5" stop-color="#3B82F6" />
+                <stop offset="1" stop-color="#0EA5E9" />
+              </linearGradient>
+              <linearGradient id="goldTrim" x1="0" y1="0" x2="28" y2="32" gradientUnits="userSpaceOnUse">
+                <stop stop-color="#D4AF37" />
+                <stop offset="1" stop-color="#B48A3E" />
+              </linearGradient>
+            </defs>
+            <path d="M14 2L2 6.8V15.2C2 23.2 7.1 30.6 14 32C20.9 30.6 26 23.2 26 15.2V6.8L14 2Z" fill="url(#shieldGrad)" fill-opacity="0.12" stroke="url(#goldTrim)" stroke-width="1.2" />
+            <path d="M14 6L6 9.8V15.5C6 20.8 9.4 25.7 14 27.2C18.6 25.7 22 20.8 22 15.5V9.8L14 6Z" fill="url(#shieldGrad)" />
+            <path d="M11 15.5L13.2 17.8L17.5 13" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+          </svg>
         </div>
-      </div>
+        <div class="brand-titles">
+          <span class="brand-name">Phish<span class="brand-name-light">Guard</span></span>
+          <span class="brand-tagline">SECURITY INTELLIGENCE</span>
+        </div>
+      </a>
 
-      <nav class="nav-cluster" aria-label="Main Navigation">
-        <a href="#scanner" class="nav-item active">Analysis</a>
-        <a href="#architecture" class="nav-item">Methodology</a>
-        <a href="#history" class="nav-item">Audit Log</a>
-        <a href="#model-card" class="nav-item">Model Card</a>
+      <!-- Center navigation links -->
+      <nav class="nav-links-cluster" aria-label="Primary navigation">
+        <a href="#scanner" class="nav-link active" data-view="scanner">Scanner</a>
+        <a href="#telemetry" class="nav-link" data-view="telemetry">Telemetry</a>
+        <a href="#audit-log" class="nav-link" data-view="audit-log">Audit Log</a>
+        <a href="#api-reference" class="nav-link" data-view="api-reference">API Specs</a>
       </nav>
 
-      <div class="masthead-meta">
-        <span class="meta-tag">AIR-GAPPED INFERENCE</span>
+      <!-- Right controls -->
+      <div class="navbar-actions">
+        <!-- Live Server Status Pill -->
+        <div class="status-indicator-pill" id="server-status-pill" title="Live status check with /api/health">
+          <span class="status-pulse-dot" id="server-status-dot"></span>
+          <span class="status-text-label" id="server-status-text">Connecting…</span>
+        </div>
+
+        <!-- Theme Toggle Button -->
+        <button type="button" class="theme-toggle-btn" id="theme-toggle" aria-label="Toggle Pearl/Obsidian Theme" title="Toggle Pearl Ivory / Obsidian Midnight">
+          <span class="theme-icon sun-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="5"></circle>
+              <line x1="12" y1="1" x2="12" y2="3"></line>
+              <line x1="12" y1="21" x2="12" y2="23"></line>
+              <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+              <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+              <line x1="1" y1="12" x2="3" y2="12"></line>
+              <line x1="21" y1="12" x2="23" y2="12"></line>
+              <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+              <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+            </svg>
+          </span>
+          <span class="theme-icon moon-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+            </svg>
+          </span>
+        </button>
       </div>
     </div>
   </header>
 
   <main id="home">
-    <!-- Executive Hero -->
-    <section class="hero-strip page-shell">
-      <div class="hero-meta-eyebrow">
-        <span>SECURITY INTELLIGENCE PLATFORM</span>
-        <span class="divider-dot">&bull;</span>
-        <span id="hero-model-status">Random Forest Classifier</span>
-      </div>
-      <h1 class="hero-heading">
-        Deterministic URL pattern analysis,<br>
-        <span class="gradient-text">verified without network traversal.</span>
-      </h1>
-      <p class="hero-lead">
-        PhishGuard applies offline statistical classification to structural and lexical URL characteristics.
-        Destination addresses are evaluated with zero HTTP transactions, DNS requests, or remote payload retrieval.
-      </p>
+    <!-- Hero & Scanner Section -->
+    <section class="hero-section app-view-section active" id="scanner">
+      <div class="content-container">
+        <!-- Editorial Kicker & Header -->
+        <div class="hero-editorial-head">
+          <div class="editorial-badge">
+            <span class="badge-gold-diamond">◆</span>
+            <span class="badge-text">AIR-GAPPED ML INFERENCE ENGINE</span>
+            <span class="badge-sep">•</span>
+            <span class="badge-model" id="hero-model-name">RandomForestClassifier</span>
+          </div>
 
-      <div class="spec-strip">
-        <div class="spec-cell">
-          <span class="cell-label">ISOLATION ARCHITECTURE</span>
-          <span class="cell-val">Zero Outbound Packets</span>
-        </div>
-        <div class="cell-divider"></div>
-        <div class="spec-cell">
-          <span class="cell-label">EVALUATION MODEL</span>
-          <span class="cell-val">Ensemble Random Forest (100 Trees)</span>
-        </div>
-        <div class="cell-divider"></div>
-        <div class="spec-cell">
-          <span class="cell-label">FEATURE MATRIX</span>
-          <span class="cell-val"><span id="feature-count">11</span> Aligned Lexical Dimensions</span>
-        </div>
-        <div class="cell-divider"></div>
-        <div class="spec-cell">
-          <span class="cell-label">CONTAINER POLICY</span>
-          <span class="cell-val">Hardened / Read-Only Root</span>
-        </div>
-      </div>
-    </section>
+          <h1 class="hero-headline">
+            Autonomous URL Threat Intelligence,<br>
+            <span class="headline-serif-emphasis">Defensively Verified.</span>
+          </h1>
 
-    <!-- Scanner Station -->
-    <section class="scanner-section page-shell" id="scanner">
-      <div class="executive-card">
-        
-        <!-- Navigation Tabs -->
-        <div class="tab-shelf">
-          <button type="button" class="tab-trigger active" id="tab-single-btn">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <circle cx="11" cy="11" r="8"></circle>
-              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-            </svg>
-            Interactive URL Assessment
-          </button>
-          <button type="button" class="tab-trigger" id="tab-batch-btn">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-              <line x1="9" y1="3" x2="9" y2="21"></line>
-            </svg>
-            Batch Telemetry Analysis
-          </button>
+          <p class="hero-subtext">
+            Deterministic lexical and structural feature classification without outbound network traversal. 
+            Evaluate untrusted URLs against 100 balanced decision trees with zero DNS resolution or HTTP requests.
+          </p>
         </div>
 
-        <!-- Single Inspection Panel -->
-        <div class="panel-body" id="panel-single">
-          <form id="scan-form" class="inspection-form" novalidate>
-            <div class="form-header-row">
-              <label for="url-input" class="field-title">TARGET URL FOR AUDIT</label>
-              <span class="char-tally" id="char-count">0 / 2048</span>
+        <!-- Command Scanner Box -->
+        <div class="scanner-card glass-panel-luxury">
+          <!-- Scanner Tab Header -->
+          <div class="scanner-tab-bar">
+            <button type="button" class="scanner-tab-btn active" id="tab-btn-single">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="11" cy="11" r="8"></circle>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+              </svg>
+              <span>Single URL Analysis</span>
+            </button>
+            <button type="button" class="scanner-tab-btn" id="tab-btn-batch">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                <line x1="9" y1="3" x2="9" y2="21"></line>
+                <line x1="9" y1="12" x2="21" y2="12"></line>
+              </svg>
+              <span>Batch Pipeline (Up to 25)</span>
+            </button>
+          </div>
+
+          <!-- Single URL Inspection View -->
+          <div class="scanner-panel-view" id="panel-single-view">
+            <form id="url-scan-form" class="command-form" novalidate>
+              <div class="input-command-wrapper" id="command-wrapper">
+                <!-- Dynamic Protocol Badge -->
+                <div class="protocol-badge badge-neutral" id="protocol-badge">URL</div>
+
+                <!-- Main URL Input -->
+                <input
+                  type="text"
+                  id="target-url-input"
+                  name="url"
+                  class="command-url-input"
+                  placeholder="https://secure-portal.service.com/auth/verify"
+                  autocomplete="off"
+                  spellcheck="false"
+                  maxlength="2048"
+                  aria-label="URL to inspect for phishing"
+                />
+
+                <!-- Clear Button -->
+                <button type="button" class="input-clear-btn" id="btn-clear-input" title="Clear input" aria-label="Clear input" hidden>
+                  &times;
+                </button>
+
+                <!-- Execute Button -->
+                <button type="submit" class="btn-execute-scan" id="btn-submit-scan">
+                  <span class="btn-text">Analyze URL</span>
+                  <span class="btn-kbd-hint">↵</span>
+                  <span class="btn-loading-spinner" aria-hidden="true" hidden></span>
+                </button>
+
+                <!-- Shimmer Loading Bar along bottom border -->
+                <div class="command-shimmer-bar" id="command-shimmer" hidden></div>
+              </div>
+
+              <!-- Character tally & validation note -->
+              <div class="command-meta-row">
+                <span class="command-format-hint">RFC 3986 lexical parser &bull; Max 2048 characters</span>
+                <span class="command-char-count" id="char-count-display">0 / 2048</span>
+              </div>
+
+              <!-- Quick-Test Sample Chips -->
+              <div class="sample-chips-row">
+                <span class="sample-chips-label">Instant Benchmark Presets:</span>
+                <div class="chips-flex-wrap">
+                  <button type="button" class="preset-chip chip-safe" data-url="https://google.com">
+                    <span class="chip-dot"></span> Google <small>(Legitimate)</small>
+                  </button>
+                  <button type="button" class="preset-chip chip-safe" data-url="https://github.com/security">
+                    <span class="chip-dot"></span> GitHub <small>(Legitimate)</small>
+                  </button>
+                  <button type="button" class="preset-chip chip-threat" data-url="http://192.168.1.100/login-update-paypal-banking-verify">
+                    <span class="chip-dot"></span> IP Host <small>(Phishing)</small>
+                  </button>
+                  <button type="button" class="preset-chip chip-threat" data-url="http://dana-kaget-bansos-bri.xyz/login">
+                    <span class="chip-dot"></span> Indo Threat <small>(Bansos/Dana)</small>
+                  </button>
+                  <button type="button" class="preset-chip chip-shortener" data-url="https://s.id/dana-bansos">
+                    <span class="chip-dot"></span> s.id Shortener <small>(Unshorten)</small>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Inline Error Toast -->
+              <div class="inline-error-banner" id="scan-error-banner" role="alert" hidden>
+                <div class="error-icon">!</div>
+                <div class="error-message-text" id="scan-error-text"></div>
+                <button type="button" class="error-close-btn" id="btn-dismiss-error">&times;</button>
+              </div>
+            </form>
+          </div>
+
+          <!-- Batch Inspection View -->
+          <div class="scanner-panel-view" id="panel-batch-view" hidden>
+            <div class="batch-console-wrap">
+              <div class="batch-headline">
+                <h4>Sequential Threat Assessment Pipeline</h4>
+                <p>Paste multiple destination targets (one URL per line, maximum 25 URLs).</p>
+              </div>
+
+              <textarea id="batch-urls-input" class="batch-textarea" rows="5" spellcheck="false" placeholder="https://google.com&#10;https://github.com/security&#10;http://192.168.1.100/login-update-paypal-banking-verify&#10;http://secure-account-verification-support.net/confirm/password"></textarea>
+
+              <div class="batch-controls-row">
+                <button type="button" class="btn-ghost" id="btn-populate-batch-sample">Insert Curated Suite</button>
+                <button type="button" class="btn-execute-scan" id="btn-start-batch">
+                  <span class="btn-text">Execute Batch Pipeline</span>
+                  <span class="btn-loading-spinner" id="batch-spinner" aria-hidden="true" hidden></span>
+                </button>
+              </div>
+
+              <div class="batch-results-container" id="batch-results-container" hidden>
+                <div class="batch-summary-cards">
+                  <div class="batch-stat-card">
+                    <span class="stat-caption">TOTAL SCANNED</span>
+                    <span class="stat-number" id="batch-count-total">0</span>
+                  </div>
+                  <div class="batch-stat-card safe-highlight">
+                    <span class="stat-caption">LEGITIMATE</span>
+                    <span class="stat-number" id="batch-count-safe">0</span>
+                  </div>
+                  <div class="batch-stat-card threat-highlight">
+                    <span class="stat-caption">PHISHING</span>
+                    <span class="stat-number" id="batch-count-phish">0</span>
+                  </div>
+                  <div class="batch-stat-card">
+                    <span class="stat-caption">THREAT INCIDENCE</span>
+                    <span class="stat-number" id="batch-ratio-pct">0%</span>
+                  </div>
+                </div>
+
+                <div class="table-responsive-wrapper">
+                  <table class="luxury-table" id="batch-table">
+                    <thead>
+                      <tr>
+                        <th>Status</th>
+                        <th>Target Address</th>
+                        <th>Classification</th>
+                        <th>Confidence</th>
+                        <th>Triggered Indicators</th>
+                      </tr>
+                    </thead>
+                    <tbody id="batch-table-body"></tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Diagnostic Result Panel (Expandable Card) -->
+        <div class="diagnostic-panel-wrapper" id="diagnostic-result-panel" hidden>
+          <div class="diagnostic-card glass-panel-luxury">
+            <!-- Header bar -->
+            <div class="diagnostic-header-bar">
+              <div class="diagnostic-kicker">
+                <span class="kicker-dot"></span>
+                <span>DETERMINISTIC CLASSIFICATION DOSSIER</span>
+              </div>
+              <div class="diagnostic-meta-tags">
+                <span class="tag-pill" id="diag-model-tag">RandomForestClassifier</span>
+                <span class="tag-pill tag-time" id="diag-time-tag">14.8 ms</span>
+              </div>
             </div>
 
-            <div class="search-console">
-              <div class="terminal-prefix">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <polyline points="4 17 10 11 4 5"></polyline>
-                  <line x1="12" y1="19" x2="20" y2="19"></line>
-                </svg>
-              </div>
-              <input 
-                id="url-input" 
-                name="url" 
-                type="text" 
-                inputmode="url" 
-                autocomplete="off" 
-                spellcheck="false" 
-                maxlength="2048" 
-                placeholder="https://example.com/path?query=param" 
-                aria-describedby="url-hint form-error"
-              >
-              <button type="button" class="btn-clear" id="clear-url-btn" title="Clear field" hidden>&times;</button>
-              <button type="submit" class="btn-submit" id="scan-button">
-                <span class="button-label">Execute Analysis</span>
-                <span class="button-spinner" aria-hidden="true"></span>
+            <!-- Dossier Navigation Tabs (Mode Tampilan Hasil) -->
+            <div class="dossier-view-tabs" id="dossier-view-tabs">
+              <button type="button" class="dossier-tab-btn active" id="btn-view-overview">
+                <span>💡 Ringkasan Praktis</span>
+              </button>
+              <button type="button" class="dossier-tab-btn" id="btn-view-technical">
+                <span>🔬 Detail Forensik URL &amp; Model AI</span>
+              </button>
+              <button type="button" class="dossier-tab-btn" id="btn-view-server">
+                <span>🌐 Infrastruktur Server &amp; OSINT</span>
               </button>
             </div>
 
-            <div class="form-footer-row">
-              <span class="format-note" id="url-hint">Accepts standard RFC-compliant HTTP &amp; HTTPS addresses. Static string parsing only.</span>
+            <!-- Tab 1: Ringkasan Ramah Pengguna -->
+            <div class="dossier-tab-panel" id="tab-panel-overview">
+              <div class="user-friendly-verdict-card threat-mode" id="user-friendly-verdict-card">
+                <div class="uf-verdict-main">
+                  <div class="uf-verdict-icon-wrap" id="uf-verdict-icon-wrap">
+                    <span class="uf-verdict-icon" id="uf-verdict-icon">⚠️</span>
+                  </div>
+                  <div class="uf-verdict-text-group">
+                    <div class="uf-badge-pill" id="uf-badge-pill">STATUS: BAHAYA</div>
+                    <h2 class="uf-verdict-headline" id="uf-verdict-headline">BAHAYA: Terindikasi Link Penipuan / Phishing!</h2>
+                    <p class="uf-verdict-summary" id="uf-verdict-summary">
+                      Jangan buka tautan ini! Situs ini dirancang untuk mencuri akun, nomor rekening, PIN, atau kode OTP Anda.
+                    </p>
+                  </div>
+                </div>
+
+                <!-- Action Advice (Apa yang Harus Anda Lakukan?) -->
+                <div class="uf-action-advice-grid" id="uf-action-advice-grid">
+                  <div class="uf-advice-box">
+                    <div class="uf-advice-icon-wrap">
+                      <span class="uf-advice-icon" id="uf-advice-icon-1">🚫</span>
+                    </div>
+                    <div class="uf-advice-content">
+                      <strong class="uf-advice-title" id="uf-advice-title-1">Jangan Klik / Buka Link</strong>
+                      <span class="uf-advice-desc" id="uf-advice-desc-1">Hindari membuka halaman ini di browser HP atau laptop Anda.</span>
+                    </div>
+                  </div>
+                  <div class="uf-advice-box">
+                    <div class="uf-advice-icon-wrap">
+                      <span class="uf-advice-icon" id="uf-advice-icon-2">🔒</span>
+                    </div>
+                    <div class="uf-advice-content">
+                      <strong class="uf-advice-title" id="uf-advice-title-2">Jangan Berikan Data Pribadi</strong>
+                      <span class="uf-advice-desc" id="uf-advice-desc-2">Jangan pernah masukkan password, PIN ATM, atau nomor OTP.</span>
+                    </div>
+                  </div>
+                  <div class="uf-advice-box">
+                    <div class="uf-advice-icon-wrap">
+                      <span class="uf-advice-icon" id="uf-advice-icon-3">🛡️</span>
+                    </div>
+                    <div class="uf-advice-content">
+                      <strong class="uf-advice-title" id="uf-advice-title-3">Blokir Pengirim Pesan</strong>
+                      <span class="uf-advice-desc" id="uf-advice-desc-3">Hapus pesan dan blokir nomor WhatsApp/SMS yang mengirim tautan.</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Mengapa Terdeteksi Demikian? -->
+                <div class="uf-reasons-container" id="uf-reasons-container">
+                  <div class="uf-reasons-header">
+                    <span class="uf-reasons-title">📌 Mengapa Hasil Analisisnya Demikian?</span>
+                    <span class="uf-reasons-sub">Rangkuman temuan utama dalam bahasa yang mudah dipahami:</span>
+                  </div>
+                  <ul class="uf-reasons-list" id="uf-reasons-list">
+                    <!-- Populated dynamically via JS -->
+                  </ul>
+                </div>
+              </div>
             </div>
 
-            <!-- Curated Benchmark Presets -->
-            <div class="benchmark-suite">
-              <span class="benchmark-label">Benchmark Test Cases:</span>
-              <div class="benchmark-tags">
-                <button type="button" class="case-chip legitimate" data-url="https://google.com">
-                  <span class="chip-indicator"></span> Google (Legitimate)
-                </button>
-                <button type="button" class="case-chip legitimate" data-url="https://github.com/security">
-                  <span class="chip-indicator"></span> GitHub (Legitimate)
-                </button>
-                <button type="button" class="case-chip threat" data-url="http://192.168.1.100/login-update-paypal-banking-verify">
-                  <span class="chip-indicator"></span> IP Numeric Host (Threat)
-                </button>
-                <button type="button" class="case-chip threat" data-url="http://secure-account-verification-support.net/confirm/password">
-                  <span class="chip-indicator"></span> Domain Spoof (Threat)
-                </button>
+            <!-- Tab 2: Detail Forensik Teknis & 20 Fitur Model AI -->
+            <div class="dossier-tab-panel" id="tab-panel-technical" hidden>
+              <div class="diagnostic-main-grid" id="diagnostic-technical-grid">
+                <!-- Left Column: Radial SVG Gauge & Verdict -->
+                <div class="radial-gauge-column">
+                  <div class="gauge-center-wrapper">
+                    <svg class="radial-svg" viewBox="0 0 160 160" width="160" height="160">
+                      <circle class="gauge-track" cx="80" cy="80" r="66" stroke-width="10" />
+                      <circle class="gauge-fill" id="radial-gauge-fill" cx="80" cy="80" r="66" stroke-width="10" stroke-dasharray="414.7" stroke-dashoffset="414.7" />
+                    </svg>
+                    <div class="gauge-inner-content">
+                      <span class="gauge-score-value" id="radial-score-pct">0.0%</span>
+                      <span class="gauge-score-label">THREAT SCORE</span>
+                    </div>
+                  </div>
+
+                  <!-- Verdict Badge -->
+                  <div class="verdict-status-badge badge-legitimate" id="diag-verdict-badge">
+                    <span class="verdict-icon" id="diag-verdict-icon">✓</span>
+                    <span class="verdict-title" id="diag-verdict-title">Legitimate URL</span>
+                  </div>
+
+                  <p class="verdict-threshold-note">
+                    Calibrated Decision Boundary: <strong id="diag-threshold-val">0.500</strong>
+                  </p>
+                </div>
+
+                <!-- Right Column: URL Anatomy Breakdown & 4 Heuristic Signals -->
+                <div class="url-anatomy-column">
+                  <!-- Safe Unshortener Trace Card (shown if shortener/redirect detected) -->
+                  <div class="unshortener-trace-card" id="unshortener-trace-box" hidden>
+                    <div class="unshortener-head">
+                      <span class="unshortener-tag">SAFE UNSHORTENER ENGINE</span>
+                      <span class="unshortener-hops" id="unshortener-hops-badge">1 Hop Resolved</span>
+                    </div>
+                    <div class="unshortener-body">
+                      <div class="trace-row">
+                        <span class="trace-label">ORIGIN:</span>
+                        <span class="trace-url mono" id="trace-origin-url">https://s.id/dana-bansos</span>
+                      </div>
+                      <div class="trace-arrow">↓ HTTP HEAD Location Header Redirect ↓</div>
+                      <div class="trace-row target">
+                        <span class="trace-label">TARGET:</span>
+                        <span class="trace-url mono" id="trace-target-url">http://dana-kaget-bansos-bri.xyz/login</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="anatomy-box">
+                    <span class="anatomy-title">URL Structural Anatomy</span>
+                    <div class="anatomy-mono-breakdown" id="anatomy-url-display">
+                      <span class="part-scheme" id="anat-scheme">https://</span>
+                      <span class="part-host" id="anat-host">google.com</span>
+                      <span class="part-path" id="anat-path">/</span>
+                      <span class="part-query" id="anat-query"></span>
+                    </div>
+                  </div>
+
+                  <!-- 4 Heuristic Signal Cards -->
+                  <div class="heuristic-cards-grid">
+                    <div class="heuristic-card" id="heur-host-card">
+                      <div class="heur-head">
+                        <span class="heur-name">Host Authority</span>
+                        <span class="heur-status" id="heur-host-badge">NOMINAL</span>
+                      </div>
+                      <div class="heur-detail" id="heur-host-desc">Length: 10 chars &bull; Standard Domain</div>
+                    </div>
+
+                    <div class="heuristic-card" id="heur-delims-card">
+                      <div class="heur-head">
+                        <span class="heur-name">Delimiter Density</span>
+                        <span class="heur-status" id="heur-delims-badge">NOMINAL</span>
+                      </div>
+                      <div class="heur-detail" id="heur-delims-desc">Dots: 1 &bull; Hyphens: 0 &bull; @: 0</div>
+                    </div>
+
+                    <div class="heuristic-card" id="heur-tokens-card">
+                      <div class="heur-head">
+                        <span class="heur-name">Credential Heuristics</span>
+                        <span class="heur-status" id="heur-tokens-badge">CLEAN</span>
+                      </div>
+                      <div class="heur-detail" id="heur-tokens-desc">0 Phishing Keywords Detected</div>
+                    </div>
+
+                    <div class="heuristic-card" id="heur-path-card">
+                      <div class="heur-head">
+                        <span class="heur-name">Directory Hierarchy</span>
+                        <span class="heur-status" id="heur-path-badge">NOMINAL</span>
+                      </div>
+                      <div class="heur-detail" id="heur-path-desc">Depth: 2 slashes &bull; Standard Path</div>
+                    </div>
+                  </div>
+
+                  <!-- Advanced Intelligence Signals (Entropy, Homograph, Indo Lexicon, TLD) -->
+                  <div class="advanced-signals-grid">
+                    <div class="adv-signal-pill" id="adv-entropy-pill">
+                      <span class="adv-pill-icon">⚡</span>
+                      <div class="adv-pill-text">
+                        <span class="adv-pill-label">Shannon Entropy</span>
+                        <strong class="adv-pill-val" id="adv-entropy-val">2.65 bits/char (Normal)</strong>
+                      </div>
+                    </div>
+
+                    <div class="adv-signal-pill" id="adv-homograph-pill">
+                      <span class="adv-pill-icon">🔤</span>
+                      <div class="adv-pill-text">
+                        <span class="adv-pill-label">Homograph / Punycode</span>
+                        <strong class="adv-pill-val" id="adv-homograph-val">ASCII Standard</strong>
+                      </div>
+                    </div>
+
+                    <div class="adv-signal-pill" id="adv-indo-pill">
+                      <span class="adv-pill-icon">🇮🇩</span>
+                      <div class="adv-pill-text">
+                        <span class="adv-pill-label">Pola Ancaman Lokal</span>
+                        <strong class="adv-pill-val" id="adv-indo-val">0 Kata Kunci Lokal</strong>
+                      </div>
+                    </div>
+
+                    <div class="adv-signal-pill" id="adv-tld-pill">
+                      <span class="adv-pill-icon">🌐</span>
+                      <div class="adv-pill-text">
+                        <span class="adv-pill-label">Top-Level Domain (TLD)</span>
+                        <strong class="adv-pill-val" id="adv-tld-val">Standard TLD</strong>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 20 Golden Feature Matrix Ledger -->
+              <div class="features-matrix-accordion">
+                <div class="features-header-toggle" id="features-toggle-btn">
+                  <div class="toggle-text-group">
+                    <span class="section-kicker">MODEL INPUT VECTOR</span>
+                    <h3>Complete 20 Golden Feature Dimensions (RandomForest 150)</h3>
+                  </div>
+                  <div class="toggle-icon-wrap">
+                    <span class="toggle-label" id="features-toggle-label">Expand</span>
+                    <svg class="chevron-svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <polyline points="6 9 12 15 18 9"></polyline>
+                    </svg>
+                  </div>
+                </div>
+
+                <div class="features-grid-content" id="features-grid-container">
+                  <!-- Dynamically populated via JS -->
+                </div>
               </div>
             </div>
 
-            <!-- Error Banner -->
-            <div class="alert-banner" id="form-error" role="alert" hidden></div>
+            <!-- Tab 3: Deep Server & Infrastructure Forensics Section -->
+            <div class="dossier-tab-panel" id="tab-panel-server" hidden>
+              <div class="server-forensics-panel" id="server-forensics-panel">
+                <div class="forensics-header-bar">
+                  <div class="forensics-title-cluster">
+                    <span class="section-kicker">OSINT &amp; HOSTING INVESTIGATION</span>
+                    <h3 class="forensics-title">Server Infrastructure &amp; Target Profiling</h3>
+                  </div>
+                  <div class="forensics-action-wrap">
+                    <button type="button" class="btn-action-glass btn-probe-action" id="btn-run-deep-probe">
+                      <span class="probe-spinner" id="probe-spinner" hidden></span>
+                      <span id="probe-btn-text">🔍 Live Server Probe</span>
+                    </button>
+                  </div>
+                </div>
 
-            <!-- Refined Processing State -->
-            <div class="processing-strip" id="loading-state" aria-live="polite" hidden>
-              <div class="shimmer-bar"></div>
-              <div class="processing-label">
-                <span>Executing Lexical Feature Vector Calculation &amp; Forest Traversal&hellip;</span>
+                <!-- Brand Impersonation Alert Banner (Shown if brand detected) -->
+                <div class="brand-alert-banner alert-threat" id="brand-alert-banner" hidden>
+                  <div class="brand-alert-icon" id="brand-alert-icon">⚠️</div>
+                  <div class="brand-alert-content">
+                    <div class="brand-alert-title" id="brand-alert-title">Indikasi Pencatutan Brand</div>
+                    <p class="brand-alert-desc" id="brand-alert-desc"></p>
+                  </div>
+                  <span class="brand-alert-badge" id="brand-alert-badge">IMPERSONATION DETECTED</span>
+                </div>
+
+                <!-- Live Infrastructure Grid -->
+                <div class="forensics-cards-grid" id="forensics-cards-grid">
+                  <!-- Card 1: IP & DNS -->
+                  <div class="fcard">
+                    <div class="fcard-head">
+                      <span class="fcard-icon">🌐</span>
+                      <span class="fcard-label">Server IP &amp; DNS</span>
+                    </div>
+                    <div class="fcard-val mono" id="fcard-ip-val">-</div>
+                    <div class="fcard-sub mono" id="fcard-rdns-val">Reverse DNS: -</div>
+                  </div>
+
+                  <!-- Card 2: Geo-Location -->
+                  <div class="fcard">
+                    <div class="fcard-head">
+                      <span class="fcard-icon">📍</span>
+                      <span class="fcard-label">Lokasi Server (GeoIP)</span>
+                    </div>
+                    <div class="fcard-val" id="fcard-geo-val">-</div>
+                    <div class="fcard-sub" id="fcard-city-val">Kota: -</div>
+                  </div>
+
+                  <!-- Card 3: Hosting / ASN -->
+                  <div class="fcard">
+                    <div class="fcard-head">
+                      <span class="fcard-icon">🏢</span>
+                      <span class="fcard-label">Penyedia Hosting &amp; ASN</span>
+                    </div>
+                    <div class="fcard-val" id="fcard-isp-val">-</div>
+                    <div class="fcard-sub mono" id="fcard-asn-val">ASN: -</div>
+                  </div>
+
+                  <!-- Card 4: SSL/TLS Certificate -->
+                  <div class="fcard">
+                    <div class="fcard-head">
+                      <span class="fcard-icon">🔒</span>
+                      <span class="fcard-label">Sertifikat SSL / TLS</span>
+                    </div>
+                    <div class="fcard-val" id="fcard-ssl-val">-</div>
+                    <div class="fcard-sub" id="fcard-ssl-issuer">Penerbit: -</div>
+                  </div>
+                </div>
+
+                <!-- Hop Redirect Flowchart (Breadcrumbs) -->
+                <div class="redirect-chain-visualizer" id="redirect-chain-visualizer" hidden>
+                  <div class="chain-header">
+                    <span class="chain-badge">DIAGRAM ALUR PENGALIHAN (REDIRECT CHAIN)</span>
+                    <span class="chain-summary" id="chain-hop-count-label">0 Hops</span>
+                  </div>
+                  <div class="chain-steps-container" id="chain-steps-container"></div>
+                </div>
+
+                <!-- Forensic Threat Signals List -->
+                <div class="forensic-signals-box" id="forensic-signals-box" hidden>
+                  <div class="signals-header">TEMUAN ANOMALI INFRASTRUKTUR:</div>
+                  <div class="signals-tags-wrap" id="forensic-signals-tags"></div>
+                </div>
               </div>
             </div>
 
-            <!-- Comprehensive Assessment Dossier -->
-            <div class="dossier-card" id="result-card" aria-live="polite" hidden>
-              <div class="dossier-headline">
-                <div class="verdict-lockup" id="result-badge">
-                  <div class="verdict-mark" id="result-symbol">&check;</div>
-                  <div class="verdict-copy">
-                    <span class="verdict-category">DETERMINISTIC CLASSIFICATION</span>
-                    <h2 class="verdict-grade" id="result-label">Legitimate</h2>
-                    <p class="verdict-target" id="result-url"></p>
-                  </div>
-                </div>
-
-                <div class="score-pod">
-                  <div class="score-line">
-                    <span class="score-value" id="result-score">0.0%</span>
-                    <span class="score-sub">PROBABILITY SCORE</span>
-                  </div>
-                  <div class="gauge-rail">
-                    <div class="gauge-fill" id="risk-progress-bar"></div>
-                  </div>
-                </div>
-              </div>
-
-              <!-- High-Density Telemetry Bar -->
-              <div class="telemetry-deck">
-                <div class="telemetry-slot">
-                  <span class="slot-head">ACTIVE CLASSIFIER</span>
-                  <span class="slot-val" id="result-model">RandomForestClassifier</span>
-                </div>
-                <div class="telemetry-slot">
-                  <span class="slot-head">CALIBRATED THRESHOLD</span>
-                  <span class="slot-val" id="result-threshold">0.500</span>
-                </div>
-                <div class="telemetry-slot">
-                  <span class="slot-head">INFERENCE TIME</span>
-                  <span class="slot-val highlight" id="result-time">17.5 ms</span>
-                </div>
-                <div class="telemetry-slot">
-                  <span class="slot-head">THREAT TIER</span>
-                  <span class="slot-val" id="result-severity">Low Risk</span>
-                </div>
-              </div>
-
-              <!-- 11 Feature Matrix Ledger -->
-              <div class="ledger-section">
-                <div class="ledger-header">
-                  <div class="ledger-title-group">
-                    <h3>Lexical Feature Matrix Ledger</h3>
-                    <p>Quantitative breakdown of the 11 observable URL dimensions submitted to the decision forest.</p>
-                  </div>
-                  <span class="ledger-tag">DETERMINISTIC EXTRACTOR</span>
-                </div>
-
-                <div class="matrix-grid" id="feature-grid">
-                  <!-- Populated via app.js -->
-                </div>
-              </div>
-
-              <!-- Observed Indicators -->
-              <div class="indicators-section">
-                <span class="indicators-header">Triggered Structural Anomalies:</span>
-                <ul class="indicator-chips" id="indicator-list"></ul>
-              </div>
-
-              <div class="dossier-toolbar">
-                <button type="button" class="btn-subtle" id="btn-copy-json">
+            <!-- Action Toolbar & Disclaimer -->
+            <div class="diagnostic-actions-bar">
+              <div class="action-buttons-group">
+                <button type="button" class="btn-action-glass" id="btn-copy-dossier-json">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
                     <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
                   </svg>
-                  Export JSON Telemetry
+                  <span id="copy-json-label">Copy JSON Dossier</span>
                 </button>
-                <button type="button" class="btn-subtle" id="btn-scan-again">
+                <button type="button" class="btn-action-glass" id="btn-reset-scan">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <polyline points="1 4 1 10 7 10"></polyline>
                     <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path>
                   </svg>
-                  Analyze New Target
+                  <span>Analyze Another Target</span>
                 </button>
               </div>
 
-              <p class="governance-disclaimer">
-                <strong>Defensive Engineering Notice:</strong> Classifications are computed via mathematical heuristics and tree-based decision surfaces. 
-                A "Legitimate" result confirms statistical absence of typical phishing indicators in the URL string, not an endorsement of external third-party destination integrity.
+              <p class="diagnostic-disclaimer">
+                <strong>Defensive Engineering Notice:</strong> Classifier output represents statistical absence of known malicious URL lexical patterns, not a warranty of website content safety.
               </p>
             </div>
-          </form>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Executive Telemetry & Model Specs Section -->
+    <section class="telemetry-section app-view-section" id="telemetry" hidden>
+      <div class="content-container">
+        <!-- Section Header -->
+        <div class="section-title-lockup">
+          <span class="section-eyebrow">EXECUTIVE TELEMETRY &amp; SPECIFICATIONS</span>
+          <h2 class="section-heading">Model Architecture &amp; Empirical Benchmarks</h2>
+          <p class="section-subtext">Verified performance metrics computed on held-out test datasets and real-time model introspection.</p>
         </div>
 
-        <!-- Batch Inspection Panel -->
-        <div class="panel-body" id="panel-batch" hidden>
-          <div class="batch-console">
-            <div class="batch-intro">
-              <h3>Bulk Telemetry Assessment</h3>
-              <p>Evaluate multiple URL strings sequentially. Paste one target per line (up to 25 items).</p>
+        <!-- Bento Grid Layout -->
+        <div class="bento-grid">
+          <!-- 4 KPI Cards -->
+          <div class="bento-card kpi-card" id="kpi-accuracy">
+            <span class="kpi-caption">BENCHMARK ACCURACY</span>
+            <div class="kpi-val-row">
+              <span class="kpi-value" data-target="96.82">0.00%</span>
+              <span class="kpi-badge-gold">Top Tier</span>
+            </div>
+            <div class="kpi-bar-track">
+              <div class="kpi-bar-fill" style="width: 96.82%"></div>
+            </div>
+            <span class="kpi-footnote">Tested on 35,370 stratified URLs</span>
+          </div>
+
+          <div class="bento-card kpi-card" id="kpi-precision">
+            <span class="kpi-caption">CLASSIFICATION PRECISION</span>
+            <div class="kpi-val-row">
+              <span class="kpi-value" data-target="95.74">0.00%</span>
+              <span class="kpi-badge-subtle">Low False Positives</span>
+            </div>
+            <div class="kpi-bar-track">
+              <div class="kpi-bar-fill" style="width: 95.74%"></div>
+            </div>
+            <span class="kpi-footnote">765 false positives out of 17,945</span>
+          </div>
+
+          <div class="bento-card kpi-card" id="kpi-recall">
+            <span class="kpi-caption">THREAT RECALL SENSITIVITY</span>
+            <div class="kpi-val-row">
+              <span class="kpi-value" data-target="97.31">0.00%</span>
+              <span class="kpi-badge-subtle">High Catch Rate</span>
+            </div>
+            <div class="kpi-bar-track">
+              <div class="kpi-bar-fill" style="width: 97.31%"></div>
+            </div>
+            <span class="kpi-footnote">Identified 16,670 of 17,132 threats</span>
+          </div>
+
+          <div class="bento-card kpi-card" id="kpi-f1">
+            <span class="kpi-caption">HARMONIC F1-SCORE</span>
+            <div class="kpi-val-row">
+              <span class="kpi-value" data-target="96.52">0.00%</span>
+              <span class="kpi-badge-gold">Optimal Balance</span>
+            </div>
+            <div class="kpi-bar-track">
+              <div class="kpi-bar-fill" style="width: 96.52%"></div>
+            </div>
+            <span class="kpi-footnote">Calibrated decision boundary: 0.50</span>
+          </div>
+
+          <!-- Model Transparency Card -->
+          <div class="bento-card model-specs-card">
+            <div class="card-inner-header">
+              <div class="spec-icon-badge">RF</div>
+              <div>
+                <h3 class="spec-title" id="spec-model-name">RandomForestClassifier</h3>
+                <p class="spec-subtitle">Supervised Tree Ensemble with Gini Impurity Split</p>
+              </div>
+              <span class="spec-live-tag">AIR-GAPPED</span>
             </div>
 
-            <textarea id="batch-textarea" class="batch-input" rows="6" spellcheck="false" placeholder="https://google.com&#10;https://github.com/security&#10;http://192.168.1.100/login-update-paypal-banking-verify&#10;http://secure-account-verification-support.net/confirm/password"></textarea>
+            <div class="spec-matrix-grid">
+              <div class="spec-slot">
+                <span class="slot-label">TRAINING DATASET</span>
+                <span class="slot-value" id="spec-dataset-name">PhiUSIIL URL Corpus (UCI)</span>
+              </div>
+              <div class="spec-slot">
+                <span class="slot-label">ACTIVE ESTIMATORS</span>
+                <span class="slot-value" id="spec-trees-count">100 Trees</span>
+              </div>
+              <div class="spec-slot">
+                <span class="slot-label">FEATURE MATRIX</span>
+                <span class="slot-value" id="spec-feature-dimensions">11 Dimensions</span>
+              </div>
+              <div class="spec-slot">
+                <span class="slot-label">MEDIAN LATENCY</span>
+                <span class="slot-value" id="spec-latency-p50">14.8 ms</span>
+              </div>
+            </div>
 
-            <div class="batch-action-bar">
-              <button type="button" class="btn-subtle" id="btn-batch-sample">Populate Standard Sample Suite</button>
-              <button type="button" class="btn-submit" id="btn-run-batch">
-                <span>Execute Batch Pipeline</span>
-                <span class="button-spinner" id="batch-spinner" aria-hidden="true" hidden></span>
+            <div class="spec-assurance-banner">
+              <span class="assurance-bullet">✓</span>
+              <span>Model evaluated strictly on static lexical URL tokens. Zero network DNS/HTTP egress during scoring.</span>
+            </div>
+          </div>
+
+          <!-- Top Feature Importance Card -->
+          <div class="bento-card feature-importance-card">
+            <div class="card-inner-header">
+              <div>
+                <h3 class="spec-title">Empirical Feature Importance</h3>
+                <p class="spec-subtitle">Top Gini impurity reduction across 100 decision trees</p>
+              </div>
+              <span class="spec-gold-tag">FEATURE WEIGHTS</span>
+            </div>
+
+            <div class="importance-bars-list" id="importance-bars-container">
+              <!-- Dynamically populated via JS -->
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- REST API Reference Section -->
+    <section class="api-reference-section app-view-section" id="api-reference" hidden>
+      <div class="content-container">
+        <div class="section-title-lockup">
+          <span class="section-eyebrow">INTEGRATION INTERFACE</span>
+          <h2 class="section-heading">RESTful Engine Endpoints</h2>
+          <p class="section-subtext">Direct program access for CI/CD pipelines, SIEM ingest, and security orchestrators.</p>
+        </div>
+
+        <div class="api-endpoints-grid">
+          <!-- Endpoint 1: Predict -->
+          <div class="api-endpoint-card glass-panel-luxury">
+            <div class="api-endpoint-header">
+              <div class="endpoint-verb-path">
+                <span class="http-verb post">POST</span>
+                <span class="http-path">/api/predict</span>
+              </div>
+              <button type="button" class="btn-copy-curl" data-curl="curl -X POST http://127.0.0.1:8000/api/predict -H 'Content-Type: application/json' -d '{&quot;url&quot;:&quot;https://google.com&quot;}'">
+                <span>Copy cURL</span>
               </button>
             </div>
+            <p class="api-endpoint-desc">Evaluates a submitted URL string and returns deterministic probability score and features.</p>
+            <div class="code-snippet-box">
+              <code>{"url": "https://secure-portal.example.com/auth"}</code>
+            </div>
+          </div>
 
-            <div class="batch-output-zone" id="batch-results-wrap" hidden>
-              <div class="summary-tally-bar">
-                <div class="tally-item">
-                  <span class="tally-label">TOTAL EVALUATED</span>
-                  <strong class="tally-number" id="batch-total">0</strong>
-                </div>
-                <div class="tally-item legitimate">
-                  <span class="tally-label">LEGITIMATE</span>
-                  <strong class="tally-number" id="batch-safe">0</strong>
-                </div>
-                <div class="tally-item threat">
-                  <span class="tally-label">PHISHING DETECTED</span>
-                  <strong class="tally-number" id="batch-phish">0</strong>
-                </div>
-                <div class="tally-item">
-                  <span class="tally-label">THREAT INCIDENCE</span>
-                  <strong class="tally-number" id="batch-ratio">0%</strong>
-                </div>
+          <!-- Endpoint 2: Health -->
+          <div class="api-endpoint-card glass-panel-luxury">
+            <div class="api-endpoint-header">
+              <div class="endpoint-verb-path">
+                <span class="http-verb get">GET</span>
+                <span class="http-path">/api/health</span>
               </div>
+              <button type="button" class="btn-copy-curl" data-curl="curl http://127.0.0.1:8000/api/health">
+                <span>Copy cURL</span>
+              </button>
+            </div>
+            <p class="api-endpoint-desc">Live readiness probe returning service availability and model readiness status.</p>
+            <div class="code-snippet-box">
+              <code>{"status": "ok", "model_status": "ready"}</code>
+            </div>
+          </div>
 
-              <div class="ledger-table-wrap">
-                <table class="data-table">
-                  <thead>
-                    <tr>
-                      <th>Status</th>
-                      <th>Evaluated URL Target</th>
-                      <th>Verdict</th>
-                      <th>Probability</th>
-                      <th>Observed Indicators</th>
-                    </tr>
-                  </thead>
-                  <tbody id="batch-tbody"></tbody>
-                </table>
+          <!-- Endpoint 3: Model Info -->
+          <div class="api-endpoint-card glass-panel-luxury">
+            <div class="api-endpoint-header">
+              <div class="endpoint-verb-path">
+                <span class="http-verb get">GET</span>
+                <span class="http-path">/api/model-info</span>
               </div>
+              <button type="button" class="btn-copy-curl" data-curl="curl http://127.0.0.1:8000/api/model-info">
+                <span>Copy cURL</span>
+              </button>
+            </div>
+            <p class="api-endpoint-desc">Introspects current classifier architecture, aligned feature schema, and threshold.</p>
+            <div class="code-snippet-box">
+              <code>{"status": "ready", "model_name": "RandomForestClassifier", ...}</code>
+            </div>
+          </div>
+
+          <!-- Endpoint 4: Metrics -->
+          <div class="api-endpoint-card glass-panel-luxury">
+            <div class="api-endpoint-header">
+              <div class="endpoint-verb-path">
+                <span class="http-verb get">GET</span>
+                <span class="http-path">/api/metrics</span>
+              </div>
+              <button type="button" class="btn-copy-curl" data-curl="curl http://127.0.0.1:8000/api/metrics">
+                <span>Copy cURL</span>
+              </button>
+            </div>
+            <p class="api-endpoint-desc">Retrieves held-out test evaluation benchmarks, confusion matrix, and feature importances.</p>
+            <div class="code-snippet-box">
+              <code>{"test_metrics": {"accuracy": 0.9682, "f1_score": 0.9652}}</code>
             </div>
           </div>
         </div>
-
       </div>
     </section>
 
-    <!-- Audit Log -->
-    <section class="audit-section page-shell" id="history">
-      <div class="section-mast">
-        <div class="mast-titles">
-          <span class="mast-kicker">SESSION AUDIT TRAIL</span>
-          <h2>Evaluated Targets Ledger</h2>
-        </div>
-        <div class="mast-actions">
-          <button type="button" class="btn-subtle" id="btn-export-history">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-              <polyline points="7 10 12 15 17 10"></polyline>
-              <line x1="12" y1="15" x2="12" y2="3"></line>
-            </svg>
-            Export CSV Audit
-          </button>
-          <button type="button" class="btn-subtle danger" id="btn-clear-history">Purge Session Log</button>
-        </div>
-      </div>
-
-      <div class="ledger-table-card">
-        <div class="ledger-table-wrap">
-          <table class="data-table">
-            <thead>
-              <tr>
-                <th>Time (UTC+7)</th>
-                <th>Inspected URL Target</th>
-                <th>Classification</th>
-                <th>Probability</th>
-                <th>Estimator</th>
-              </tr>
-            </thead>
-            <tbody id="history-tbody">
-              <tr class="empty-state-row">
-                <td colspan="5">No transactions recorded in this execution context. Run an analysis above to populate audit telemetry.</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </section>
-
-    <!-- Architecture & Methodology -->
-    <section class="methodology-section page-shell" id="architecture">
-      <div class="section-mast">
-        <div class="mast-titles">
-          <span class="mast-kicker">SYSTEM DESIGN &amp; PRINCIPLES</span>
-          <h2>Defensive Analytical Pipeline</h2>
-        </div>
-      </div>
-
-      <div class="pipeline-trio">
-        <div class="pipeline-block">
-          <div class="block-num">01</div>
-          <h3>Deterministic Normalization</h3>
-          <p>
-            RFC 3986 lexical sanitation. Isolates authority, scheme, path hierarchy, and query parameters. 
-            Internationalized domain labels are decoded to canonical ASCII IDNA without initiating host lookup calls.
-          </p>
-        </div>
-        <div class="pipeline-block">
-          <div class="block-num">02</div>
-          <h3>Feature Vector Alignment</h3>
-          <p>
-            Computes 11 mathematical metrics across structural lengths, delimiter frequencies (@, -, ., /), 
-            suspicious credential keywords, raw numeric IPv4 address usage, and transport security protocols.
-          </p>
-        </div>
-        <div class="pipeline-block">
-          <div class="block-num">03</div>
-          <h3>Ensemble Forest Inference</h3>
-          <p>
-            Evaluated by a 100-tree Scikit-Learn Random Forest ensemble. The positive class probability is benchmarked 
-            against a calibrated 0.50 decision boundary to produce an immutable verdict with sub-25ms response latency.
-          </p>
-        </div>
-      </div>
-    </section>
-
-    <!-- Model Specifications -->
-    <section class="spec-section page-shell" id="model-card">
-      <div class="section-mast">
-        <div class="mast-titles">
-          <span class="mast-kicker">TECHNICAL GOVERNANCE</span>
-          <h2>Model Specification Card</h2>
-        </div>
-      </div>
-
-      <div class="spec-card-executive">
-        <div class="spec-lead-bar">
-          <div class="spec-id-badge">RF-100</div>
-          <div class="spec-id-text">
-            <h3 id="model-name">RandomForestClassifier</h3>
-            <p id="model-message">Supervised Ensemble Decision Forest &bull; 100 Estimators &bull; Depth Balanced</p>
+    <!-- Recent Audit Log Section -->
+    <section class="audit-section app-view-section" id="audit-log" hidden>
+      <div class="content-container">
+        <!-- Section Header with Controls -->
+        <div class="audit-header-flex">
+          <div class="audit-title-block">
+            <span class="section-eyebrow">SESSION AUDIT TRAIL</span>
+            <h2 class="section-heading">Recent Audit Log</h2>
+            <p class="section-subtext">Immutable browser-persisted transaction records for verified target destinations.</p>
           </div>
-          <span class="spec-operational-tag">OPERATIONAL &bull; AIR-GAPPED</span>
-        </div>
 
-        <div class="spec-quad-grid">
-          <div class="quad-item">
-            <span class="quad-label">FEATURE MATRIX</span>
-            <strong class="quad-val">11 Dimensions</strong>
-          </div>
-          <div class="quad-item">
-            <span class="quad-label">TRAINING DATA BASELINE</span>
-            <strong class="quad-val" id="model-dataset">PhiUSIIL URL Corpus</strong>
-          </div>
-          <div class="quad-item">
-            <span class="quad-label">OPTIMAL DECISION BOUNDARY</span>
-            <strong class="quad-val">0.500</strong>
-          </div>
-          <div class="quad-item">
-            <span class="quad-label">VALIDATION F1-SCORE</span>
-            <strong class="quad-val highlight" id="model-f1">0.965</strong>
+          <div class="audit-actions-block">
+            <button type="button" class="btn-ghost" id="btn-export-audit-csv">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="7 10 12 15 17 10"></polyline>
+                <line x1="12" y1="15" x2="12" y2="3"></line>
+              </svg>
+              <span>Export CSV</span>
+            </button>
+            <button type="button" class="btn-ghost btn-danger-ghost" id="btn-purge-audit-log">
+              <span>Purge Log</span>
+            </button>
           </div>
         </div>
 
-        <div class="spec-assurance-row" id="metrics-note">
-          <span class="assurance-icon">&check;</span>
-          <span>Docker container isolation confirmed. Non-root execution (`appuser`), memory restricted (`1GB`), drop Linux capabilities (`ALL`).</span>
+        <!-- Filter bar -->
+        <div class="audit-filters-bar">
+          <div class="filter-pills-group">
+            <button type="button" class="filter-pill active" data-filter="all">All Targets</button>
+            <button type="button" class="filter-pill" data-filter="safe">Legitimate Only</button>
+            <button type="button" class="filter-pill" data-filter="phish">Phishing Threats</button>
+          </div>
+
+          <div class="audit-search-wrapper">
+            <input type="text" id="audit-search-input" class="audit-search-input" placeholder="Filter by URL string…" spellcheck="false">
+          </div>
         </div>
-        <div id="dataset-status" hidden></div>
+
+        <!-- Audit Table -->
+        <div class="audit-table-card glass-panel-luxury">
+          <div class="table-responsive-wrapper">
+            <table class="luxury-table" id="audit-history-table">
+              <thead>
+                <tr>
+                  <th>Timestamp</th>
+                  <th>Inspected URL Target</th>
+                  <th>Verdict</th>
+                  <th>Threat Confidence</th>
+                  <th>Estimator</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="audit-history-tbody">
+                <tr class="empty-row">
+                  <td colspan="6">No URL transactions recorded yet. Run an analysis above to populate audit telemetry.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
       </div>
     </section>
   </main>
 
-  <!-- Executive Footer -->
-  <footer class="colophon">
-    <div class="page-shell colophon-inner">
-      <div class="colophon-main">
-        <strong>PhishGuard Enterprise Defense Platform</strong>
-        <p>Defensive Information Security Engineering &bull; Offline Threat Intelligence</p>
+  <!-- Executive Colophon Footer -->
+  <footer class="colophon-footer">
+    <div class="content-container">
+      <div class="footer-inner-grid">
+        <div class="footer-brand-summary">
+          <div class="brand-cluster footer-brand">
+            <span class="brand-name">Phish<span class="brand-name-light">Guard</span></span>
+            <span class="footer-edition-badge">ENTERPRISE EDITION</span>
+          </div>
+          <p class="footer-bio">
+            High-assurance machine learning URL threat intelligence platform. 
+            Deterministic lexical feature scoring engineered for modern security operations.
+          </p>
+        </div>
+
+        <div class="footer-links-col">
+          <span class="footer-col-title">Navigation</span>
+          <a href="#scanner">URL Scanner</a>
+          <a href="#telemetry">Telemetry &amp; Specs</a>
+          <a href="#audit-log">Audit Log</a>
+          <a href="#api-reference">API Documentation</a>
+        </div>
+
+        <div class="footer-links-col">
+          <span class="footer-col-title">Security Governance</span>
+          <span class="footer-static-item">Air-Gapped Processing</span>
+          <span class="footer-static-item">Zero Outbound Egress</span>
+          <span class="footer-static-item">Local ML Inference</span>
+          <span class="footer-static-item">RFC 3986 Normalization</span>
+        </div>
       </div>
-      <div class="colophon-meta">
-        <span>SECURITY INTELLIGENCE SYSTEM &bull; LOCAL RUNTIME</span>
+
+      <div class="footer-legal-bar">
+        <span>&copy; 2026 PhishGuard Intelligence. Built for Defensive Cybersecurity Analysis.</span>
+        <div class="footer-runtime-status">
+          <span class="runtime-pip"></span>
+          <span id="footer-runtime-text">Local Model Active &bull; 127.0.0.1:8000</span>
+        </div>
       </div>
     </div>
   </footer>

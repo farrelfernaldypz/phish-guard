@@ -39,22 +39,16 @@ Download the PhiUSIIL Phishing URL Dataset from the [UCI Machine Learning Reposi
 
 For another labeled CSV, provide its URL and label column names and explicit raw label mapping.
 
-## Train and evaluate
+## Train and evaluate (Cloud-Based MLOps Architecture)
 
-```powershell
-python training/train.py --dataset dataset/raw/PhiUSIIL_Phishing_URL_Dataset.csv --url-column URL --label-column label --phishing-label 0 --legitimate-label 1
-```
+Untuk menjaga performa dan melindungi sumber daya komputer lokal, proses **pelatihan model (training) dilakukan sepenuhnya di Cloud (Google Colab / Kaggle)**, bukan di komputer lokal.
 
-The script removes missing/empty URL or label rows, drops duplicate URL strings, maps the supplied labels to phishing=1 and legitimate=0, extracts the shared 21 URL features, and compares Logistic Regression with Random Forest on a validation set. It selects the model using validation F1 with recall and precision tie-breaks, chooses a threshold on validation data using F2, and reports final metrics once on the held-out test set. Host-grouped splits are preferred; the report records a stratified row split fallback when groups are insufficient.
-
-A successful real run creates:
-
-- `artifacts/model/phishguard_model.joblib`
-- `artifacts/evaluation/metrics.json`
-- `artifacts/evaluation/evaluation.md`
-- Confusion matrix, model comparison, and classification metric PNG files
-
-No evaluation numbers are included before training. Do not place raw dataset files or trained artifacts in public Git repositories.
+1. Buka [Google Colab](https://colab.research.google.com/) dan unggah notebook `training/PhishGuard_Model_Training_Colab.ipynb`.
+2. Jalankan seluruh sel di Colab untuk mengunduh dataset PhiUSIIL (235k URL), mengekstrak 11 fitur leksikal + pola ancaman lokal Indonesia, dan melatih ensemble `RandomForestClassifier` (100 Decision Trees).
+3. Unduh hasil artefak model dan letakkan di:
+   - `artifacts/model/model_phishing.pkl`
+   - `artifacts/evaluation/metrics.json`
+4. Komputer lokal murni bertindak sebagai **Inference Engine** yang super ringan (<30ms per scan, memory footprint rendah) tanpa beban proses training sama sekali.
 
 ## Run the app
 

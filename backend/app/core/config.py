@@ -5,7 +5,13 @@ FRONTEND_DIR = PROJECT_ROOT / "frontend"
 _default_model = PROJECT_ROOT / "artifacts/model/phishguard_model.joblib"
 if not _default_model.is_file() and (PROJECT_ROOT / "artifacts/model/model_phishing.pkl").is_file():
     _default_model = PROJECT_ROOT / "artifacts/model/model_phishing.pkl"
-MODEL_PATH = Path(os.getenv("PHISHGUARD_MODEL_PATH", _default_model))
+_env_model = os.getenv("PHISHGUARD_MODEL_PATH")
+if _env_model and Path(_env_model).is_file():
+    MODEL_PATH = Path(_env_model)
+elif _env_model and (PROJECT_ROOT / "artifacts/model" / Path(_env_model).name).is_file():
+    MODEL_PATH = PROJECT_ROOT / "artifacts/model" / Path(_env_model).name
+else:
+    MODEL_PATH = _default_model
 EVALUATION_PATH = PROJECT_ROOT / "artifacts/evaluation/metrics.json"
 APP_VERSION = "1.0.0"
 RATE_LIMIT_REQUESTS = int(os.getenv("RATE_LIMIT_REQUESTS", "30"))

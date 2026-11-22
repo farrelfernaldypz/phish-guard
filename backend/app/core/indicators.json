@@ -1,5 +1,28 @@
 {
-  "suspicious_keywords": ["login", "verify", "account", "secure", "update", "signin", "banking", "password", "wallet", "confirm", "recover", "suspended", "webscr", "ebayisapi", "paypal", "credential"],
-  "url_shorteners": ["bit.ly", "tinyurl.com", "t.co", "goo.gl", "is.gd", "ow.ly", "buff.ly", "rebrand.ly", "cutt.ly", "shorturl.at", "tiny.cc", "lnkd.in"]
+  "suspicious_keywords": [
+    "login", "verify", "account", "secure", "update", "signin",
+    "banking", "password", "wallet", "confirm", "recover", "suspended",
+    "webscr", "ebayisapi", "paypal", "credential",
+    "undian", "bansos", "prakerja", "dana", "dana-kaget", "pulsa",
+    "kejutan", "hadiah", "bca", "bri", "bni", "mandiri", "gopay",
+    "shopee", "linkaja", "kuota", "subsidi", "blt", "ojk", "kominfo",
+    "klikbca", "brimo"
+  ],
+  "url_shorteners": [
+    "bit.ly", "tinyurl.com", "t.co", "goo.gl", "is.gd", "ow.ly",
+    "buff.ly", "rebrand.ly", "cutt.ly", "shorturl.at", "tiny.cc",
+    "lnkd.in", "s.id", "rb.gy", "v.gd", "clck.ru", "rotf.lol",
+    "trib.al", "tny.im"
+  ],
+  "suspicious_tlds": [
+    "xyz", "top", "tk", "ml", "ga", "cf", "gq", "work", "click",
+    "buzz", "fit", "rest", "cam", "kim", "bar", "icu", "club",
+    "live", "surf", "monster", "cfd"
+  ],
+  "indonesian_keywords": [
+    "undian", "bansos", "prakerja", "dana", "dana-kaget", "pulsa",
+    "kejutan", "hadiah", "bca", "bri", "bni", "mandiri", "gopay",
+    "shopee", "linkaja", "kuota", "subsidi", "blt", "ojk", "kominfo",
+    "klikbca", "brimo"
+  ]
 }
-

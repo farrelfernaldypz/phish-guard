@@ -37,3 +37,38 @@ def test_shortener_match_is_host_aware():
     assert extract_features("https://bit.ly/abc")["has_url_shortener"] == 1
     assert extract_features("https://notbit.ly.example/path")["has_url_shortener"] == 0
 
+def test_shannon_entropy_calculation():
+    from backend.app.services.feature_extraction import calculate_shannon_entropy
+    assert calculate_shannon_entropy("") == 0.0
+    normal_entropy = calculate_shannon_entropy("google.com")
+    dga_entropy = calculate_shannon_entropy("x89f2a93c7z1v4k9.xyz")
+    assert dga_entropy > normal_entropy
+    assert dga_entropy > 3.8
+
+def test_homograph_and_punycode_detection():
+    from backend.app.services.feature_extraction import detect_homograph
+    res_normal = detect_homograph("paypal.com")
+    assert res_normal["is_homograph"] is False
+    res_punycode = detect_homograph("xn--pple-43d.com")
+    assert res_punycode["is_homograph"] is True
+    assert res_punycode["has_punycode"] is True
+
+def test_indonesian_threat_lexicon_detection():
+    from backend.app.services.feature_extraction import extract_advanced_heuristics
+    res = extract_advanced_heuristics("http://dana-kaget-bansos-bri.xyz/login")
+    assert res["is_suspicious_tld"] is True
+    assert "bansos" in res["indonesian_keywords_detected"]
+    assert "dana" in res["indonesian_keywords_detected"]
+    assert res["indonesian_threat_count"] >= 3
+
+def test_safe_unshortener_service():
+    from backend.app.services.unshortener import SafeUnshortener
+    unshortener = SafeUnshortener()
+    assert unshortener.is_known_shortener("https://s.id/bansos") is True
+    assert unshortener.is_known_shortener("https://bit.ly/promo") is True
+    assert unshortener.is_known_shortener("https://github.com") is False
+    res = unshortener.resolve("https://example.com/normal-path")
+    assert res["resolved_url"] == "https://example.com/normal-path"
+    assert res["is_shortened_service"] is False
+
+

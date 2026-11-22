@@ -5,11 +5,14 @@ from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 from .api.routes import router
+from .integrations.whatsapp_webhook import router as whatsapp_router
 from .core.config import APP_VERSION, FRONTEND_DIR, RATE_LIMIT_REQUESTS, RATE_LIMIT_WINDOW_SECONDS
 from .services.prediction import PredictionService
+from .services.server_investigator import ServerInvestigator
 
 app = FastAPI(title="PhishGuard API", version=APP_VERSION, docs_url=None, redoc_url=None, openapi_url=None)
 app.state.prediction_service = PredictionService()
+app.state.server_investigator = ServerInvestigator()
 app.state.rate_events = defaultdict(deque)
 
 def apply_security_headers(response):
@@ -17,7 +20,7 @@ def apply_security_headers(response):
     response.headers["X-Frame-Options"] = "DENY"
     response.headers["Referrer-Policy"] = "no-referrer"
     response.headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()"
-    response.headers["Content-Security-Policy"] = "default-src 'self'; style-src 'self'; script-src 'self'; img-src 'self' data:; connect-src 'self'; base-uri 'self'; frame-ancestors 'none'"
+    response.headers["Content-Security-Policy"] = "default-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; script-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' http://127.0.0.1:* http://localhost:*; base-uri 'self'; frame-ancestors 'none'"
     response.headers["Cache-Control"] = "no-store"
     return response
 
@@ -30,7 +33,7 @@ class RequestBodyLimitMiddleware:
         self.max_bytes = max_bytes
 
     async def __call__(self, scope, receive, send):
-        if scope["type"] != "http" or scope["path"] != "/api/predict":
+        if scope["type"] != "http" or scope["path"] not in ("/api/predict", "/api/investigate"):
             await self.app(scope, receive, send)
             return
         total_bytes = 0
@@ -78,6 +81,7 @@ async def safe_error_handler(request: Request, error: Exception):
     return apply_security_headers(JSONResponse({"detail": "An unexpected server error occurred."}, status_code=500))
 
 app.include_router(router)
+app.include_router(whatsapp_router)
 app.add_middleware(RequestBodyLimitMiddleware, max_bytes=8192)
 if FRONTEND_DIR.is_dir():
     app.mount("/", StaticFiles(directory=FRONTEND_DIR, html=True), name="frontend")
