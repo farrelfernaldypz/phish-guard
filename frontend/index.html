@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#F8FAFC" id="theme-meta-color">
-  <meta name="description" content="PhishGuard Enterprise — Luxury Real-Time URL Phishing Intelligence powered by Scikit-Learn RandomForestClassifier.">
+  <meta name="description" content="PhishGuard, sebuah terobosan dalam deteksi phishing berbasis URL menggunakan pendekatan Data-Centric AI dan Machine Learning Generasi Lanjutan.">
   <title>PhishGuard &mdash; Defensive Threat Intelligence</title>
 
   <!-- Typography: Plus Jakarta Sans, Instrument Serif, JetBrains Mono -->
@@ -103,9 +103,9 @@
         <div class="hero-editorial-head">
           <div class="editorial-badge">
             <span class="badge-gold-diamond">◆</span>
-            <span class="badge-text">AIR-GAPPED ML INFERENCE ENGINE</span>
+            <span class="badge-text">DATA-CENTRIC AI • NEXT-GEN ML ENGINE</span>
             <span class="badge-sep">•</span>
-            <span class="badge-model" id="hero-model-name">RandomForestClassifier</span>
+            <span class="badge-model" id="hero-model-name">LightGBM (LGBMClassifier)</span>
           </div>
 
           <h1 class="hero-headline">
@@ -114,8 +114,8 @@
           </h1>
 
           <p class="hero-subtext">
-            Deterministic lexical and structural feature classification without outbound network traversal. 
-            Evaluate untrusted URLs against 100 balanced decision trees with zero DNS resolution or HTTP requests.
+            PhishGuard, sebuah terobosan dalam deteksi phishing berbasis URL menggunakan pendekatan Data-Centric AI dan Machine Learning Generasi Lanjutan.
+            Evaluate untrusted URLs deterministically across 27 lexical, fuzzy typosquatting, and TF-IDF char n-gram features with LightGBM.
           </p>
         </div>
 
@@ -280,8 +280,8 @@
                 <span>DETERMINISTIC CLASSIFICATION DOSSIER</span>
               </div>
               <div class="diagnostic-meta-tags">
-                <span class="tag-pill" id="diag-model-tag">RandomForestClassifier</span>
-                <span class="tag-pill tag-time" id="diag-time-tag">14.8 ms</span>
+                <span class="tag-pill" id="diag-model-tag">LightGBM (LGBMClassifier)</span>
+                <span class="tag-pill tag-time" id="diag-time-tag">22.0 ms</span>
               </div>
             </div>
 
@@ -358,7 +358,7 @@
               </div>
             </div>
 
-            <!-- Tab 2: Detail Forensik Teknis & 20 Fitur Model AI -->
+            <!-- Tab 2: Detail Forensik Teknis & 27 Fitur Model AI -->
             <div class="dossier-tab-panel" id="tab-panel-technical" hidden>
               <div class="diagnostic-main-grid" id="diagnostic-technical-grid">
                 <!-- Left Column: Radial SVG Gauge & Verdict -->
@@ -488,7 +488,7 @@
                 </div>
               </div>
 
-              <!-- 20 Golden Feature Matrix Ledger -->
+              <!-- 27 Feature Matrix Ledger -->
               <div class="features-matrix-accordion">
                 <div class="features-header-toggle" id="features-toggle-btn">
                   <div class="toggle-text-group">
@@ -639,58 +639,58 @@
           <div class="bento-card kpi-card" id="kpi-accuracy">
             <span class="kpi-caption">BENCHMARK ACCURACY</span>
             <div class="kpi-val-row">
-              <span class="kpi-value" data-target="96.82">0.00%</span>
+              <span class="kpi-value" data-target="99.77">0.00%</span>
               <span class="kpi-badge-gold">Top Tier</span>
             </div>
             <div class="kpi-bar-track">
-              <div class="kpi-bar-fill" style="width: 96.82%"></div>
+              <div class="kpi-bar-fill" style="width: 99.77%"></div>
             </div>
-            <span class="kpi-footnote">Tested on 35,370 stratified URLs</span>
+            <span class="kpi-footnote">Tested on 35,306 held-out PhiUSIIL URLs</span>
           </div>
 
           <div class="bento-card kpi-card" id="kpi-precision">
             <span class="kpi-caption">CLASSIFICATION PRECISION</span>
             <div class="kpi-val-row">
-              <span class="kpi-value" data-target="95.74">0.00%</span>
+              <span class="kpi-value" data-target="99.84">0.00%</span>
               <span class="kpi-badge-subtle">Low False Positives</span>
             </div>
             <div class="kpi-bar-track">
-              <div class="kpi-bar-fill" style="width: 95.74%"></div>
+              <div class="kpi-bar-fill" style="width: 99.84%"></div>
             </div>
-            <span class="kpi-footnote">765 false positives out of 17,945</span>
+            <span class="kpi-footnote">24 false positives out of 20,228 safe URLs</span>
           </div>
 
           <div class="bento-card kpi-card" id="kpi-recall">
             <span class="kpi-caption">THREAT RECALL SENSITIVITY</span>
             <div class="kpi-val-row">
-              <span class="kpi-value" data-target="97.31">0.00%</span>
+              <span class="kpi-value" data-target="99.62">0.00%</span>
               <span class="kpi-badge-subtle">High Catch Rate</span>
             </div>
             <div class="kpi-bar-track">
-              <div class="kpi-bar-fill" style="width: 97.31%"></div>
+              <div class="kpi-bar-fill" style="width: 99.62%"></div>
             </div>
-            <span class="kpi-footnote">Identified 16,670 of 17,132 threats</span>
+            <span class="kpi-footnote">Identified 15,021 of 15,078 threats</span>
           </div>
 
           <div class="bento-card kpi-card" id="kpi-f1">
             <span class="kpi-caption">HARMONIC F1-SCORE</span>
             <div class="kpi-val-row">
-              <span class="kpi-value" data-target="96.52">0.00%</span>
+              <span class="kpi-value" data-target="99.73">0.00%</span>
               <span class="kpi-badge-gold">Optimal Balance</span>
             </div>
             <div class="kpi-bar-track">
-              <div class="kpi-bar-fill" style="width: 96.52%"></div>
+              <div class="kpi-bar-fill" style="width: 99.73%"></div>
             </div>
-            <span class="kpi-footnote">Calibrated decision boundary: 0.50</span>
+            <span class="kpi-footnote">ROC-AUC: 0.9993 • Decision boundary: 0.50</span>
           </div>
 
           <!-- Model Transparency Card -->
           <div class="bento-card model-specs-card">
             <div class="card-inner-header">
-              <div class="spec-icon-badge">RF</div>
+              <div class="spec-icon-badge">v2</div>
               <div>
-                <h3 class="spec-title" id="spec-model-name">RandomForestClassifier</h3>
-                <p class="spec-subtitle">Supervised Tree Ensemble with Gini Impurity Split</p>
+                <h3 class="spec-title" id="spec-model-name">LightGBM (LGBMClassifier)</h3>
+                <p class="spec-subtitle">Stacked Hybrid: Char N-Gram TF-IDF + Data-Centric GBDT</p>
               </div>
               <span class="spec-live-tag">AIR-GAPPED</span>
             </div>
@@ -698,25 +698,25 @@
             <div class="spec-matrix-grid">
               <div class="spec-slot">
                 <span class="slot-label">TRAINING DATASET</span>
-                <span class="slot-value" id="spec-dataset-name">PhiUSIIL URL Corpus (UCI)</span>
+                <span class="slot-value" id="spec-dataset-name">PhiUSIIL + Data-Centric Aug</span>
               </div>
               <div class="spec-slot">
-                <span class="slot-label">ACTIVE ESTIMATORS</span>
-                <span class="slot-value" id="spec-trees-count">100 Trees</span>
+                <span class="slot-label">ARCHITECTURE</span>
+                <span class="slot-value" id="spec-trees-count">LightGBM + TF-IDF</span>
               </div>
               <div class="spec-slot">
                 <span class="slot-label">FEATURE MATRIX</span>
-                <span class="slot-value" id="spec-feature-dimensions">11 Dimensions</span>
+                <span class="slot-value" id="spec-feature-dimensions">27 Dimensions</span>
               </div>
               <div class="spec-slot">
                 <span class="slot-label">MEDIAN LATENCY</span>
-                <span class="slot-value" id="spec-latency-p50">14.8 ms</span>
+                <span class="slot-value" id="spec-latency-p50">22.0 ms</span>
               </div>
             </div>
 
             <div class="spec-assurance-banner">
               <span class="assurance-bullet">✓</span>
-              <span>Model evaluated strictly on static lexical URL tokens. Zero network DNS/HTTP egress during scoring.</span>
+              <span>PhishGuard, sebuah terobosan dalam deteksi phishing berbasis URL menggunakan pendekatan Data-Centric AI dan Machine Learning Generasi Lanjutan.</span>
             </div>
           </div>
 
@@ -725,7 +725,7 @@
             <div class="card-inner-header">
               <div>
                 <h3 class="spec-title">Empirical Feature Importance</h3>
-                <p class="spec-subtitle">Top Gini impurity reduction across 100 decision trees</p>
+                <p class="spec-subtitle">Permutation importance across 27 lexical, fuzzy &amp; TF-IDF features</p>
               </div>
               <span class="spec-gold-tag">FEATURE WEIGHTS</span>
             </div>
@@ -795,7 +795,7 @@
             </div>
             <p class="api-endpoint-desc">Introspects current classifier architecture, aligned feature schema, and threshold.</p>
             <div class="code-snippet-box">
-              <code>{"status": "ready", "model_name": "RandomForestClassifier", ...}</code>
+              <code>{"status": "ready", "model_name": "LightGBM (LGBMClassifier)", ...}</code>
             </div>
           </div>
 
@@ -812,7 +812,7 @@
             </div>
             <p class="api-endpoint-desc">Retrieves held-out test evaluation benchmarks, confusion matrix, and feature importances.</p>
             <div class="code-snippet-box">
-              <code>{"test_metrics": {"accuracy": 0.9682, "f1_score": 0.9652}}</code>
+              <code>{"test_metrics": {"accuracy": 0.9977, "f1_score": 0.9973}}</code>
             </div>
           </div>
         </div>
@@ -891,11 +891,10 @@
         <div class="footer-brand-summary">
           <div class="brand-cluster footer-brand">
             <span class="brand-name">Phish<span class="brand-name-light">Guard</span></span>
-            <span class="footer-edition-badge">ENTERPRISE EDITION</span>
+            <span class="footer-edition-badge">DATA-CENTRIC AI v2</span>
           </div>
           <p class="footer-bio">
-            High-assurance machine learning URL threat intelligence platform. 
-            Deterministic lexical feature scoring engineered for modern security operations.
+            PhishGuard, sebuah terobosan dalam deteksi phishing berbasis URL menggunakan pendekatan Data-Centric AI dan Machine Learning Generasi Lanjutan.
           </p>
         </div>
 
@@ -920,7 +919,7 @@
         <span>&copy; 2026 PhishGuard Intelligence. Built for Defensive Cybersecurity Analysis.</span>
         <div class="footer-runtime-status">
           <span class="runtime-pip"></span>
-          <span id="footer-runtime-text">Local Model Active &bull; 127.0.0.1:8000</span>
+          <span id="footer-runtime-text">Online &bull; PhishGuard v2 Inference Engine</span>
         </div>
       </div>
     </div>

@@ -415,7 +415,8 @@
       DOM.serverStatusDot.className = "status-pulse-dot ready";
       DOM.serverStatusText.textContent = STATE.modelReady ? "Model Ready" : "Classifier Initializing";
       if (DOM.footerRuntimeText) {
-        DOM.footerRuntimeText.textContent = `Online • Connected to Engine (127.0.0.1:8000)`;
+        const hostLabel = window.location.host || "127.0.0.1:8000";
+        DOM.footerRuntimeText.textContent = `Online • Connected to Engine (${hostLabel})`;
       }
 
       await loadModelInfo();
@@ -430,7 +431,7 @@
         DOM.footerRuntimeText.textContent = "Demo Mode • Local Lexical Classifier Active";
       }
       if (DOM.heroModelName) {
-        DOM.heroModelName.textContent = "RandomForest (Demo Ensemble)";
+        DOM.heroModelName.textContent = "LightGBM v2 (Demo Mode)";
       }
     }
   }
@@ -478,28 +479,23 @@
       // Use calibrated fallback benchmarks
     }
 
-    // Default empirical metrics (RandomForest 150 Trees, 20 Golden Features)
+    // Default empirical metrics (PhishGuard v2: LightGBM + TF-IDF + Data-Centric AI)
     const defaultMetrics = {
       test_metrics: {
-        accuracy: 0.9956,
-        precision: 0.9974,
-        recall: 0.9924,
-        f1_score: 0.9949,
-        latency_p50_ms: 12.8
+        accuracy: 0.9977,
+        precision: 0.9984,
+        recall: 0.9962,
+        f1_score: 0.9973,
+        latency_p50_ms: 22.0
       },
       feature_importance: [
-        { feature: "has_https", importance: 0.4317 },
-        { feature: "path_length", importance: 0.1873 },
-        { feature: "count_slash", importance: 0.1573 },
-        { feature: "count_digits", importance: 0.0670 },
-        { feature: "url_length", importance: 0.0589 },
-        { feature: "is_suspicious_tld", importance: 0.0224 },
-        { feature: "shannon_entropy", importance: 0.0183 },
-        { feature: "hostname_length", importance: 0.0147 },
-        { feature: "count_subdomains", importance: 0.0140 },
-        { feature: "count_hyphen", importance: 0.0134 },
-        { feature: "count_dot", importance: 0.0111 },
-        { feature: "suspicious_words", importance: 0.0022 }
+        { feature: "has_https", importance: 0.2172 },
+        { feature: "tfidf_char_prob", importance: 0.1943 },
+        { feature: "path_length", importance: 0.0673 },
+        { feature: "count_slash", importance: 0.0129 },
+        { feature: "count_dot", importance: 0.0119 },
+        { feature: "url_length", importance: 0.0021 },
+        { feature: "shannon_entropy", importance: 0.0013 }
       ]
     };
     renderTelemetryData(defaultMetrics);
@@ -515,8 +511,19 @@
         f1: testMetrics.f1_score * 100
       });
 
-      if (DOM.specLatencyP50 && testMetrics.latency_p50_ms) {
-        DOM.specLatencyP50.textContent = `${testMetrics.latency_p50_ms} ms`;
+      const barMap = {
+        "#kpi-accuracy .kpi-bar-fill": testMetrics.accuracy * 100,
+        "#kpi-precision .kpi-bar-fill": testMetrics.precision * 100,
+        "#kpi-recall .kpi-bar-fill": testMetrics.recall * 100,
+        "#kpi-f1 .kpi-bar-fill": testMetrics.f1_score * 100
+      };
+      for (const [sel, pctVal] of Object.entries(barMap)) {
+        const barEl = document.querySelector(sel);
+        if (barEl) barEl.style.width = `${pctVal.toFixed(2)}%`;
+      }
+
+      if (DOM.specLatencyP50) {
+        DOM.specLatencyP50.textContent = `${testMetrics.latency_p50_ms ?? 22.0} ms`;
       }
     }
 
@@ -557,12 +564,12 @@
 
   function renderDefaultImportanceBars() {
     const defaults = [
-      { feature: "url_length", importance: 0.3041 },
-      { feature: "hostname_length", importance: 0.2014 },
-      { feature: "suspicious_words", importance: 0.1398 },
-      { feature: "count_dot", importance: 0.1094 },
-      { feature: "count_slash", importance: 0.1050 },
-      { feature: "count_hyphen", importance: 0.0593 }
+      { feature: "has_https", importance: 0.2172 },
+      { feature: "tfidf_char_prob", importance: 0.1943 },
+      { feature: "path_length", importance: 0.0673 },
+      { feature: "count_slash", importance: 0.0129 },
+      { feature: "count_dot", importance: 0.0119 },
+      { feature: "url_length", importance: 0.0021 }
     ];
     renderFeatureImportanceBars(defaults);
   }
@@ -572,8 +579,11 @@
     DOM.importanceBarsContainer.replaceChildren();
 
     const topItems = items.slice(0, 6);
+    const maxImp = Math.max(...topItems.map((i) => Math.max(0, Number(i.importance) || 0)), 0.01);
     topItems.forEach((item) => {
-      const pct = (item.importance * 100).toFixed(1);
+      const val = Math.max(0, Number(item.importance) || 0);
+      const pct = (val * 100).toFixed(1);
+      const barWidth = Math.min(100, (val / maxImp) * 100).toFixed(1);
       const label = FEATURE_SPECS[item.feature]?.name || item.feature;
 
       const row = document.createElement("div");
@@ -592,7 +602,7 @@
       // Animate width after mount
       setTimeout(() => {
         const fill = row.querySelector(".importance-bar-fill");
-        if (fill) fill.style.width = `${pct}%`;
+        if (fill) fill.style.width = `${barWidth}%`;
       }, 50);
     });
   }
@@ -644,8 +654,8 @@
     DOM.btnViewTechnical?.addEventListener("click", () => switchDossierView("technical"));
     DOM.btnViewServer?.addEventListener("click", () => switchDossierView("server"));
 
-    // App Navigation View Switcher (Single-Page App Tabs)
-    DOM.navLinks?.forEach((link) => {
+    // App Navigation View Switcher (Single-Page App Tabs + Footer Links)
+    document.querySelectorAll('.nav-link, .footer-links-col a[href^="#"]').forEach((link) => {
       link.addEventListener("click", (e) => {
         e.preventDefault();
         const view = link.dataset.view || link.getAttribute("href")?.replace("#", "");
@@ -986,7 +996,7 @@
           reasons.push("🎲 <strong>Karakter Acak Mencurigakan:</strong> Nama domain tersusun dari huruf acak tidak wajar, ciri khas domain penipuan otomatis.");
         }
         if (reasons.length === 0) {
-          reasons.push("🤖 <strong>Pola Karakteristik Phishing:</strong> Model Machine Learning mendeteksi kemiripan pola struktur direktori, panjang path, dan frekuensi karakter dengan 150.000+ data phishing.");
+          reasons.push("🤖 <strong>Pola Karakteristik Phishing:</strong> Model Machine Learning generasi lanjutan mendeteksi kemiripan pola subkata URL, struktur direktori, dan karakter khas serangan phishing.");
         }
       } else {
         if (features.has_https === 1) {
@@ -1035,7 +1045,7 @@
     renderUserFriendlyVerdict(data);
 
     // Meta tags
-    DOM.diagModelTag.textContent = data.model_name || "RandomForestClassifier";
+    DOM.diagModelTag.textContent = data.model_name || "LightGBM (LGBMClassifier)";
     DOM.diagTimeTag.textContent = `${Number(data.processing_time_ms ?? elapsedMs).toFixed(1)} ms`;
     DOM.diagThresholdVal.textContent = Number(data.threshold ?? 0.5).toFixed(3);
 
@@ -1188,8 +1198,19 @@
     // 5. SSL / TLS Certificate
     const ssl = info.ssl_intelligence || {};
     if (DOM.fcardSslVal) {
-      DOM.fcardSslVal.textContent = ssl.has_ssl ? "Enkripsi TLS Aktif" : "Tidak Terenkripsi (HTTP)";
-      DOM.fcardSslVal.style.color = ssl.has_ssl ? "var(--color-safe)" : "var(--color-threat)";
+      if (ssl.has_ssl === true && ssl.cert_valid === false) {
+        DOM.fcardSslVal.textContent = "Sertifikat Tidak Valid";
+        DOM.fcardSslVal.style.color = "var(--color-threat)";
+      } else if (ssl.has_ssl === true) {
+        DOM.fcardSslVal.textContent = "Enkripsi TLS Aktif";
+        DOM.fcardSslVal.style.color = "var(--color-safe)";
+      } else if (ssl.has_ssl === null) {
+        DOM.fcardSslVal.textContent = "Probe TLS Terbatas";
+        DOM.fcardSslVal.style.color = "var(--text-secondary)";
+      } else {
+        DOM.fcardSslVal.textContent = "Tidak Terenkripsi (HTTP)";
+        DOM.fcardSslVal.style.color = "var(--color-threat)";
+      }
     }
     if (DOM.fcardSslIssuer) {
       DOM.fcardSslIssuer.textContent = ssl.issuer_org ? `Penerbit: ${ssl.issuer_org}` : (ssl.status || "-");
@@ -1510,7 +1531,7 @@
       label: record.label,
       prediction: record.prediction,
       score: (record.model_score * 100).toFixed(1),
-      model: record.model_name || "RandomForest"
+      model: record.model_name || "LightGBM v2"
     };
 
     list.unshift(entry);
@@ -1604,7 +1625,7 @@
 
   // ==========================================================================
   // CLIENT-SIDE FALLBACK INFERENCE ENGINE (OFFLINE / DEMO MODE)
-  // Aligned with the 11 feature dimensions and Random Forest weights
+  // Aligned with PhishGuard v2 Data-Centric AI heuristics
   // ==========================================================================
   function clientSideFallbackInference(url) {
     let cleanUrl = url.trim();
@@ -1768,7 +1789,7 @@
         hop_count: 0
       },
       relevant_indicators: relevant,
-      model_name: "RandomForestClassifier (Client Heuristics)",
+      model_name: "LightGBM v2 (Client Heuristics)",
       processing_time_ms: Math.round(10 + Math.random() * 15)
     };
   }
