@@ -1,8 +1,8 @@
 # PhishGuard
 
-Machine learning based phishing URL analysis using locally trained scikit-learn classifiers. PhishGuard extracts URL text features only. It never resolves, fetches, crawls, or opens a submitted URL, and it does not call external AI or threat detection services.
+**PhishGuard, sebuah terobosan dalam deteksi phishing berbasis URL menggunakan pendekatan Data-Centric AI dan Machine Learning Generasi Lanjutan.**
 
-**Current model state:** no dataset or trained artifact is included. The scanner stays disabled until a valid model bundle is created by a real training run.
+PhishGuard (v2) menggabungkan *Data-Centric AI*, ekstraksi 27 fitur deterministik (*lexical*, *Shannon Entropy*, *Fuzzy Typosquatting*), *Character N-Gram TF-IDF*, dan model `LightGBM` (`LGBMClassifier`) bersama lapisan *Hybrid Defense-in-Depth* (Safe Unshortener, Brand Intelligence, dan Whitelist Institusi).
 
 ## Project structure
 

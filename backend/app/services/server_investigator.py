@@ -9,14 +9,58 @@ Performs safe, non-rendering network and OSINT profiling:
 from __future__ import annotations
 import socket
 import ssl
-import json
 import ipaddress
-import urllib.request
 import urllib.parse
-import urllib.error
-from datetime import datetime, timezone
 from typing import Any
+import httpx
 from .unshortener import SafeUnshortener
+
+_SYNTHETIC_IP_NETS = (
+    ipaddress.ip_network("198.18.0.0/15"),  # RFC 2544 / Fake-IP proxy range
+    ipaddress.ip_network("100.64.0.0/10"),  # CGNAT / shared address space
+)
+_DOH_ENDPOINTS = (
+    "https://cloudflare-dns.com/dns-query",
+    "https://dns.google/resolve",
+)
+
+
+def _is_non_public_ip(ip_obj: ipaddress.IPv4Address | ipaddress.IPv6Address) -> bool:
+    """Check whether an IP is private, loopback, reserved, or synthetic proxy Fake-IP."""
+    return (
+        ip_obj.is_private
+        or ip_obj.is_loopback
+        or ip_obj.is_link_local
+        or ip_obj.is_reserved
+        or any(ip_obj in net for net in _SYNTHETIC_IP_NETS)
+    )
+
+
+def _extract_ssl_cert_error(err: BaseException) -> ssl.SSLCertVerificationError | None:
+    """Walk exception chain to detect wrapped SSLCertVerificationError from httpx/httpcore."""
+    cur: BaseException | None = err
+    seen: set[int] = set()
+    while cur is not None and id(cur) not in seen:
+        seen.add(id(cur))
+        if isinstance(cur, ssl.SSLCertVerificationError):
+            return cur
+        cur = cur.__cause__ or cur.__context__
+    return None
+
+
+def _format_cert_result(cert: dict[str, Any], hostname: str) -> dict[str, Any]:
+    """Normalize peer TLS certificate metadata into a uniform dictionary."""
+    issuer_dict = dict(x[0] for x in cert.get("issuer", []))
+    subject_dict = dict(x[0] for x in cert.get("subject", []))
+    return {
+        "has_ssl": True,
+        "cert_valid": True,
+        "probe_status": "ok",
+        "status": "Valid TLS Handshake",
+        "issuer_org": issuer_dict.get("organizationName", issuer_dict.get("commonName", "Unknown Issuer")),
+        "common_name": subject_dict.get("commonName", hostname),
+        "expires_at": cert.get("notAfter"),
+    }
 
 BRAND_KNOWLEDGE_BASE = [
     {
@@ -148,12 +192,12 @@ class ServerInvestigator:
     def identify_brand(self, url: str) -> dict[str, Any]:
         """Detects if the URL mimics a recognized enterprise brand."""
         parsed = urllib.parse.urlsplit(url if "://" in url else f"//{url}")
-        host = (parsed.hostname or "").lower()
-        full_path = (parsed.path + ("?" + parsed.query if parsed.query else "")).lower()
-        full_text = f"{host}{full_path}"
+        host = (parsed.hostname or "").lower().rstrip(".")
+        path_only = (parsed.path or "").lower()
+        target_text = f"{host}{path_only}"
 
+        # Check official domains across all brands before matching keywords
         for entry in BRAND_KNOWLEDGE_BASE:
-            # Check if domain is genuinely official
             is_official = any(host == d or host.endswith("." + d) for d in entry["official_domains"])
             if is_official:
                 return {
@@ -166,8 +210,8 @@ class ServerInvestigator:
                     "threat_note": None
                 }
 
-            # Check if keywords are abused on an unapproved domain
-            matched_keywords = [kw for kw in entry["keywords"] if kw in full_text]
+        for entry in BRAND_KNOWLEDGE_BASE:
+            matched_keywords = [kw for kw in entry["keywords"] if kw in target_text]
             if matched_keywords:
                 return {
                     "is_impersonating": True,
@@ -190,49 +234,144 @@ class ServerInvestigator:
             "threat_note": None
         }
 
+    def _resolve_doh(self, hostname: str) -> list[str]:
+        """Resolve public A/AAAA records via DNS over HTTPS (Cloudflare / Google)."""
+        headers = {"Accept": "application/dns-json", "User-Agent": "PhishGuard-ForensicEngine/2.0"}
+        try:
+            with httpx.Client(timeout=self.timeout_sec) as client:
+                for endpoint in _DOH_ENDPOINTS:
+                    ips: list[str] = []
+                    for rtype in ("A", "AAAA"):
+                        try:
+                            resp = client.get(endpoint, params={"name": hostname, "type": rtype}, headers=headers)
+                            if resp.status_code != 200:
+                                continue
+                            data = resp.json()
+                            if data.get("Status") != 0:
+                                continue
+                            for ans in data.get("Answer", []):
+                                if ans.get("type") not in (1, 28):
+                                    continue
+                                candidate = str(ans.get("data", "")).strip()
+                                try:
+                                    ip_obj = ipaddress.ip_address(candidate)
+                                    if not _is_non_public_ip(ip_obj) and candidate not in ips:
+                                        ips.append(candidate)
+                                except ValueError:
+                                    continue
+                        except Exception:
+                            continue
+                        if ips and rtype == "A":
+                            break
+                    if ips:
+                        return ips
+        except Exception:
+            pass
+        return []
+
+    def _resolve_ptr_doh(self, ip_str: str) -> str | None:
+        """Resolve reverse DNS PTR record via DoH when raw PTR sockets are restricted."""
+        try:
+            ip_obj = ipaddress.ip_address(ip_str)
+            ptr_name = ip_obj.reverse_pointer
+            headers = {"Accept": "application/dns-json", "User-Agent": "PhishGuard-ForensicEngine/2.0"}
+            with httpx.Client(timeout=self.timeout_sec) as client:
+                for endpoint in _DOH_ENDPOINTS:
+                    try:
+                        resp = client.get(endpoint, params={"name": ptr_name, "type": "PTR"}, headers=headers)
+                        if resp.status_code != 200:
+                            continue
+                        for ans in resp.json().get("Answer", []):
+                            if ans.get("type") == 12:
+                                return str(ans.get("data", "")).rstrip(".") or None
+                    except Exception:
+                        continue
+        except Exception:
+            pass
+        return None
+
     def resolve_dns(self, hostname: str) -> dict[str, Any]:
-        """Safely performs DNS resolution with strict timeout."""
+        """Safely resolve DNS via system DNS with automatic DoH fallback for Fake-IP / restricted hosts."""
         if not hostname:
             return {"status": "error", "error": "Hostname kosong", "ips": []}
 
+        clean_host = hostname.strip().strip("[]").rstrip(".")
+        # Handle literal IP hostnames directly
         try:
-            addr_info = socket.getaddrinfo(hostname, None, socket.AF_UNSPEC, socket.SOCK_STREAM)
-            ips = list({info[4][0] for info in addr_info if info and info[4]})
-            if not ips:
-                return {"status": "unresolved", "error": "Domain tidak merespons IP DNS", "ips": []}
+            lit_ip = ipaddress.ip_address(clean_host)
+            is_priv = _is_non_public_ip(lit_ip)
+            return {
+                "status": "resolved",
+                "primary_ip": str(lit_ip),
+                "all_ips": [str(lit_ip)],
+                "is_private": is_priv,
+                "reverse_dns": None,
+                "ip_version": f"IPv{lit_ip.version}",
+                "dns_source": "literal",
+            }
+        except ValueError:
+            pass
 
-            primary_ip = ips[0]
-            ip_obj = ipaddress.ip_address(primary_ip)
-            is_private = ip_obj.is_private or ip_obj.is_loopback
+        is_localhost = clean_host.lower() in ("localhost", "localhost.localdomain")
+        ips: list[str] = []
+        dns_source = "system"
+        sys_err: str | None = None
 
-            reverse_host = None
-            if not is_private:
+        try:
+            addr_info = socket.getaddrinfo(clean_host, None, socket.AF_UNSPEC, socket.SOCK_STREAM)
+            ips = list(dict.fromkeys(info[4][0] for info in addr_info if info and info[4]))
+        except socket.gaierror as e:
+            sys_err = str(e)
+        except Exception as e:
+            sys_err = str(e)
+
+        # If system DNS failed or returned synthetic/Fake-IP (e.g. 198.18.x.x), resolve via DoH
+        all_non_public = bool(ips) and all(_is_non_public_ip(ipaddress.ip_address(ip)) for ip in ips)
+        if not is_localhost and (not ips or all_non_public):
+            doh_ips = self._resolve_doh(clean_host)
+            if doh_ips:
+                ips = doh_ips
+                dns_source = "doh"
+
+        if not ips:
+            return {
+                "status": "unresolved",
+                "error": f"Domain gagal di-resolve (NXDOMAIN / DNS Error): {sys_err or 'No records'}",
+                "ips": [],
+            }
+
+        primary_ip = ips[0]
+        ip_obj = ipaddress.ip_address(primary_ip)
+        is_private = _is_non_public_ip(ip_obj)
+
+        reverse_host = None
+        if not is_private:
+            if dns_source == "system":
                 try:
                     reverse_host = socket.gethostbyaddr(primary_ip)[0]
                 except Exception:
-                    reverse_host = None
+                    reverse_host = self._resolve_ptr_doh(primary_ip)
+            else:
+                reverse_host = self._resolve_ptr_doh(primary_ip)
 
-            return {
-                "status": "resolved",
-                "primary_ip": primary_ip,
-                "all_ips": ips,
-                "is_private": is_private,
-                "reverse_dns": reverse_host,
-                "ip_version": f"IPv{ip_obj.version}"
-            }
-        except socket.gaierror as e:
-            return {"status": "unresolved", "error": f"Domain gagal di-resolve (NXDOMAIN / DNS Error): {e}", "ips": []}
-        except Exception as e:
-            return {"status": "error", "error": f"Gagal mengecek DNS: {e}", "ips": []}
+        return {
+            "status": "resolved",
+            "primary_ip": primary_ip,
+            "all_ips": ips,
+            "is_private": is_private,
+            "reverse_dns": reverse_host,
+            "ip_version": f"IPv{ip_obj.version}",
+            "dns_source": dns_source,
+        }
 
     def query_geoip(self, ip_address: str) -> dict[str, Any]:
-        """Queries geolocation and ASN information for a public IP."""
+        """Queries geolocation and ASN information for a public IP via proxy-aware HTTPS."""
         if not ip_address:
             return {"status": "unavailable", "message": "IP tidak tersedia"}
 
         try:
             ip_obj = ipaddress.ip_address(ip_address)
-            if ip_obj.is_private or ip_obj.is_loopback:
+            if _is_non_public_ip(ip_obj):
                 return {
                     "status": "private_network",
                     "country": "Localhost / Jaringan Privat",
@@ -245,22 +384,48 @@ class ServerInvestigator:
         except ValueError:
             return {"status": "invalid_ip"}
 
-        # Live GeoIP Query via lightweight JSON endpoint
+        headers = {"User-Agent": "PhishGuard-ForensicEngine/2.0"}
         try:
-            url = f"http://ip-api.com/json/{ip_address}?fields=status,message,country,countryCode,city,isp,org,as,query"
-            req = urllib.request.Request(url, headers={"User-Agent": "PhishGuard-ForensicEngine/1.0"})
-            with urllib.request.urlopen(req, timeout=self.timeout_sec) as resp:
-                data = json.loads(resp.read().decode("utf-8"))
-                if data.get("status") == "success":
-                    return {
-                        "status": "success",
-                        "country": data.get("country", "Unknown"),
-                        "country_code": data.get("countryCode", "??"),
-                        "city": data.get("city", "Unknown"),
-                        "isp": data.get("isp", "Unknown ISP"),
-                        "organization": data.get("org", data.get("isp", "Unknown")),
-                        "asn": data.get("as", "Unknown ASN")
-                    }
+            with httpx.Client(timeout=self.timeout_sec) as client:
+                # Primary: HTTPS endpoint (works through HTTPS_PROXY)
+                try:
+                    resp = client.get(f"https://ipwho.is/{ip_address}", headers=headers)
+                    if resp.status_code == 200:
+                        data = resp.json()
+                        if data.get("success") is True:
+                            conn = data.get("connection") or {}
+                            asn_num = conn.get("asn")
+                            org_name = conn.get("org") or conn.get("isp") or "Unknown"
+                            return {
+                                "status": "success",
+                                "country": data.get("country", "Unknown"),
+                                "country_code": data.get("country_code", "??"),
+                                "city": data.get("city", "Unknown"),
+                                "isp": conn.get("isp") or org_name,
+                                "organization": org_name,
+                                "asn": f"AS{asn_num} {org_name}".strip() if asn_num else org_name,
+                            }
+                except Exception:
+                    pass
+
+                # Fallback: ip-api JSON via httpx
+                try:
+                    url = f"http://ip-api.com/json/{ip_address}?fields=status,message,country,countryCode,city,isp,org,as,query"
+                    resp = client.get(url, headers=headers)
+                    if resp.status_code == 200:
+                        data = resp.json()
+                        if data.get("status") == "success":
+                            return {
+                                "status": "success",
+                                "country": data.get("country", "Unknown"),
+                                "country_code": data.get("countryCode", "??"),
+                                "city": data.get("city", "Unknown"),
+                                "isp": data.get("isp", "Unknown ISP"),
+                                "organization": data.get("org", data.get("isp", "Unknown")),
+                                "asn": data.get("as", "Unknown ASN"),
+                            }
+                except Exception:
+                    pass
         except Exception:
             pass
 
@@ -274,34 +439,60 @@ class ServerInvestigator:
             "asn": "N/A"
         }
 
-    def inspect_ssl(self, hostname: str, port: int = 443) -> dict[str, Any]:
-        """Safely inspects SSL/TLS certificate metadata without downloading payload."""
+    def inspect_ssl(self, hostname: str, port: int = 443, is_private_ip: bool = False) -> dict[str, Any]:
+        """Safely inspect TLS certificate via proxy-aware httpx stream, with direct socket fallback."""
         if not hostname:
-            return {"has_ssl": False, "status": "No Hostname"}
+            return {"has_ssl": False, "cert_valid": False, "probe_status": "invalid", "status": "No Hostname"}
+        if is_private_ip:
+            return {
+                "has_ssl": None,
+                "cert_valid": None,
+                "probe_status": "private_or_fake_ip",
+                "status": "Probe TLS Dilewati (DNS Mengarah ke IP Privat / Fake-IP Proxy)"
+            }
 
+        target_https = f"https://{hostname}" if port == 443 else f"https://{hostname}:{port}"
+        try:
+            with httpx.Client(timeout=self.timeout_sec, follow_redirects=False) as client:
+                with client.stream("HEAD", target_https, headers={"User-Agent": "PhishGuard-TLSProbe/2.0"}) as resp:
+                    stream = resp.extensions.get("network_stream")
+                    ssl_obj = stream.get_extra_info("ssl_object") if stream else None
+                    cert = ssl_obj.getpeercert() if ssl_obj else None
+                    if cert:
+                        return _format_cert_result(cert, hostname)
+        except Exception as err:
+            cert_err = _extract_ssl_cert_error(err)
+            if cert_err is not None:
+                return {
+                    "has_ssl": True,
+                    "cert_valid": False,
+                    "probe_status": "invalid_cert",
+                    "status": f"Sertifikat Tidak Valid / Self-Signed: {cert_err.verify_message}"
+                }
+
+        # Fallback: direct socket TLS probe (for non-HTTP TLS services or direct hosts)
         try:
             ctx = ssl.create_default_context()
             with socket.create_connection((hostname, port), timeout=self.timeout_sec) as sock:
                 with ctx.wrap_socket(sock, server_hostname=hostname) as ssock:
                     cert = ssock.getpeercert()
                     if not cert:
-                        return {"has_ssl": False, "status": "Sertifikat Kosong"}
-
-                    issuer_dict = dict(x[0] for x in cert.get("issuer", []))
-                    subject_dict = dict(x[0] for x in cert.get("subject", []))
-                    not_after = cert.get("notAfter")
-
-                    return {
-                        "has_ssl": True,
-                        "status": "Valid TLS Handshake",
-                        "issuer_org": issuer_dict.get("organizationName", issuer_dict.get("commonName", "Unknown Issuer")),
-                        "common_name": subject_dict.get("commonName", hostname),
-                        "expires_at": not_after
-                    }
+                        return {"has_ssl": False, "cert_valid": False, "probe_status": "empty_cert", "status": "Sertifikat Kosong"}
+                    return _format_cert_result(cert, hostname)
         except ssl.SSLCertVerificationError as e:
-            return {"has_ssl": True, "status": f"Sertifikat Tidak Valid / Self-Signed: {e.verify_message}"}
+            return {
+                "has_ssl": True,
+                "cert_valid": False,
+                "probe_status": "invalid_cert",
+                "status": f"Sertifikat Tidak Valid / Self-Signed: {e.verify_message}"
+            }
         except Exception:
-            return {"has_ssl": False, "status": "Tidak Menggunakan SSL atau Port 443 Tertutup"}
+            return {
+                "has_ssl": None,
+                "cert_valid": None,
+                "probe_status": "unreachable",
+                "status": "Port 443 Tidak Terjangkau / Dibatasi Firewall Server"
+            }
 
     def investigate(self, url: str) -> dict[str, Any]:
         """Executes full deep forensic investigation."""
@@ -333,26 +524,36 @@ class ServerInvestigator:
                 brand_info = initial_brand
 
         # 6. SSL Handshake Probe (if HTTPS)
-        ssl_info = self.inspect_ssl(dest_host) if parsed_final.scheme == "https" else {
+        ssl_info = self.inspect_ssl(dest_host, is_private_ip=bool(dns_info.get("is_private"))) if parsed_final.scheme == "https" else {
             "has_ssl": False,
+            "cert_valid": False,
+            "probe_status": "http_plaintext",
             "status": "Insecure Protocol (HTTP Polos Tanpa Enkripsi)"
         }
 
         # 7. Forensic Threat Diagnosis
+        init_host = (urllib.parse.urlsplit(target_url).hostname or "").lower().removeprefix("www.")
+        final_host_base = dest_host.lower().removeprefix("www.")
+        is_suspicious_redirect = bool(redirect_trace.get("redirect_occurred")) and (
+            bool(redirect_trace.get("is_shortened_service")) or (init_host != final_host_base)
+        )
+
         threat_signals = []
         if brand_info["is_impersonating"]:
             threat_signals.append(f"Pencatutan Brand: Meniru {brand_info['brand']}")
-        if redirect_trace.get("redirect_occurred"):
+        if is_suspicious_redirect:
             threat_signals.append(f"Redirect Cloaking: Disamarkan melalui {redirect_trace.get('hop_count')} lompatan URL")
-        if not ssl_info.get("has_ssl"):
-            threat_signals.append("Protokol Tidak Terenkripsi (HTTP / Sertifikat Bodong)")
+        if ssl_info.get("has_ssl") is False:
+            threat_signals.append("Protokol Tidak Terenkripsi (HTTP Polos)")
+        elif ssl_info.get("cert_valid") is False:
+            threat_signals.append("Sertifikat SSL/TLS Tidak Valid / Self-Signed")
         if geoip_info.get("country_code") not in ("ID", "??", "LOC", "N/A") and "Indonesia" in brand_info.get("category", ""):
             threat_signals.append(f"Infrastruktur Asing: Brand Indonesia di-hosting di server luar negeri ({geoip_info.get('country')})")
 
         threat_level = "LOW"
         if len(threat_signals) >= 3 or brand_info["is_impersonating"]:
             threat_level = "CRITICAL"
-        elif len(threat_signals) >= 1 or redirect_trace.get("redirect_occurred"):
+        elif len(threat_signals) >= 1 or is_suspicious_redirect:
             threat_level = "ELEVATED"
 
         return {
