@@ -905,6 +905,10 @@ body {
   animation: slideDownFade 0.25s ease-out;
 }
 
+.inline-error-banner[hidden] {
+  display: none !important;
+}
+
 .error-icon {
   width: 20px;
   height: 20px;
@@ -1116,12 +1120,16 @@ body {
   color: var(--accent-sapphire);
 }
 
-/* Two-Column Main Grid */
+/* Stacked Technical Diagnostic Layout */
 .diagnostic-main-grid {
   display: grid;
-  grid-template-columns: 240px 1fr;
-  gap: 2rem;
-  align-items: center;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 1.5rem;
+  align-items: stretch;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  overflow: hidden;
   margin-bottom: 2rem;
 }
 
@@ -1132,7 +1140,9 @@ body {
   align-items: center;
   text-align: center;
   padding: 1rem 0;
-  border-right: 1px solid var(--border-subtle);
+  border-bottom: 1px solid var(--border-subtle);
+  min-width: 0;
+  width: 100%;
 }
 
 .gauge-center-wrapper {
@@ -1250,6 +1260,9 @@ body {
   display: flex;
   flex-direction: column;
   gap: 1.25rem;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
 }
 
 .anatomy-box {
@@ -1258,6 +1271,8 @@ body {
   border-radius: 12px;
   padding: 1rem 1.25rem;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
+  min-width: 0;
+  max-width: 100%;
 }
 
 .anatomy-title {
@@ -1279,6 +1294,9 @@ body {
   border: 1px solid var(--border-subtle);
   border-radius: 8px;
   padding: 0.65rem 0.85rem;
+  min-width: 0;
+  max-width: 100%;
+  overflow-wrap: anywhere;
 }
 
 [data-theme="obsidian"] .anatomy-mono-breakdown {
@@ -1316,6 +1334,8 @@ body {
   padding: 0.85rem 1rem;
   margin-bottom: 0.85rem;
   animation: slideDownFade 0.3s ease-out;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .unshortener-head {
@@ -1352,6 +1372,8 @@ body {
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  min-width: 0;
+  flex-wrap: wrap;
 }
 
 .trace-label {
@@ -1364,6 +1386,9 @@ body {
   font-family: "JetBrains Mono", monospace;
   color: var(--text-secondary);
   word-break: break-all;
+  min-width: 0;
+  max-width: 100%;
+  overflow-wrap: anywhere;
 }
 
 .trace-row.target .trace-url {
@@ -1385,8 +1410,10 @@ body {
 /* 4 Heuristic Signal Cards */
 .heuristic-cards-grid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 0.75rem;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .heuristic-card {
@@ -1396,6 +1423,11 @@ body {
   padding: 0.9rem 1rem;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.02);
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  min-width: 0;
+}
+
+.heur-detail {
+  overflow-wrap: anywhere;
 }
 
 .heuristic-card:hover {
@@ -1447,9 +1479,11 @@ body {
 /* Advanced Intelligence Signals Grid */
 .advanced-signals-grid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 0.75rem;
   margin-top: 0.85rem;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .adv-signal-pill {
@@ -1462,6 +1496,7 @@ body {
   gap: 0.75rem;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.02);
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  min-width: 0;
 }
 
 .adv-signal-pill:hover {
@@ -2588,11 +2623,14 @@ body {
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
 }
 
-/* Forensics 4-Cards Grid */
+/* Infrastructure Forensics Cards */
 .forensics-cards-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 1rem;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
   margin-bottom: 1.5rem;
 }
 
@@ -2606,6 +2644,9 @@ body {
   gap: 0.45rem;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
 }
 
 .fcard:hover {
@@ -2623,23 +2664,27 @@ body {
   color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 0.06em;
+  min-width: 0;
+}
+
+.fcard-label {
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .fcard-val {
   font-size: 1rem;
   font-weight: 700;
   color: var(--text-primary);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .fcard-sub {
   font-size: 0.75rem;
   color: var(--text-secondary);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 /* Redirect Chain Flow */
@@ -2747,9 +2792,9 @@ body {
   gap: 0.35rem;
 }
 
-@media (max-width: 900px) {
+@media (max-width: 600px) {
   .forensics-cards-grid {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 

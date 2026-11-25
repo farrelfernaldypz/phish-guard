@@ -19,6 +19,7 @@
     modelInfo: null,
     metrics: null,
     lastDossier: null,
+    activeScannerTab: "single",
     activeFilter: "all",
     searchQuery: ""
   };
@@ -687,26 +688,35 @@
   }
 
   function switchScannerTab(tab) {
-    if (tab === "single") {
-      DOM.tabBtnSingle.classList.add("active");
-      DOM.tabBtnBatch.classList.remove("active");
-      DOM.panelSingleView.hidden = false;
-      DOM.panelBatchView.hidden = true;
-    } else {
-      DOM.tabBtnBatch.classList.add("active");
-      DOM.tabBtnSingle.classList.remove("active");
-      DOM.panelBatchView.hidden = false;
-      DOM.panelSingleView.hidden = true;
-    }
+    const activeTab = tab === "batch" ? "batch" : "single";
+    const isSingleActive = activeTab === "single";
+
+    STATE.activeScannerTab = activeTab;
+    DOM.tabBtnSingle.classList.toggle("active", isSingleActive);
+    DOM.tabBtnBatch.classList.toggle("active", !isSingleActive);
+    DOM.tabBtnSingle.setAttribute("aria-pressed", String(isSingleActive));
+    DOM.tabBtnBatch.setAttribute("aria-pressed", String(!isSingleActive));
+    DOM.panelSingleView.hidden = !isSingleActive;
+    DOM.panelBatchView.hidden = isSingleActive;
+
+    // The dossier is retained while switching tabs, but only shown for its own mode.
+    DOM.diagnosticPanel.hidden = !isSingleActive || !STATE.lastDossier;
   }
 
   function showError(message) {
-    DOM.errorText.textContent = message;
+    const errorMessage = typeof message === "string" ? message.trim() : "";
+    if (STATE.modelReady || !errorMessage || !DOM.errorText || !DOM.errorBanner) {
+      dismissError();
+      return;
+    }
+
+    DOM.errorText.textContent = errorMessage;
     DOM.errorBanner.hidden = false;
   }
 
   function dismissError() {
-    DOM.errorBanner.hidden = true;
+    if (DOM.errorText) DOM.errorText.textContent = "";
+    if (DOM.errorBanner) DOM.errorBanner.hidden = true;
   }
 
   // ==========================================================================
@@ -718,8 +728,12 @@
 
     const url = DOM.urlInput.value.trim();
     if (!url) {
-      showError("Please enter a destination URL address to evaluate.");
       DOM.urlInput.focus();
+      return;
+    }
+
+    if (!STATE.modelReady) {
+      showError("Model AI belum siap. Muat model terlebih dahulu sebelum menganalisis URL.");
       return;
     }
 
@@ -727,6 +741,12 @@
   }
 
   async function executeSingleUrlScan(rawUrl) {
+    dismissError();
+    if (!STATE.modelReady) {
+      showError("Model AI belum siap. Muat model terlebih dahulu sebelum menganalisis URL.");
+      return;
+    }
+
     setScanningState(true);
     const startTime = performance.now();
 
@@ -743,7 +763,9 @@
 
         const payload = await response.json();
         if (!response.ok) {
-          throw new Error(payload.detail || `Server error (${response.status})`);
+          const error = new Error(payload.detail || `Server error (${response.status})`);
+          error.status = response.status;
+          throw error;
         }
         data = payload;
       } else {
@@ -758,7 +780,16 @@
       renderDiagnosticDossier(data, elapsed);
       saveAuditRecord(data);
     } catch (err) {
-      showError(err.message || "Failed to reach inference engine. Try again.");
+      if (err.status === 503) {
+        STATE.modelReady = false;
+        if (DOM.serverStatusDot) DOM.serverStatusDot.className = "status-pulse-dot";
+        if (DOM.serverStatusText) DOM.serverStatusText.textContent = "Classifier Initializing";
+        showError(err.message || "Model AI belum siap. Muat model terlebih dahulu sebelum menganalisis URL.");
+      } else if (!STATE.modelReady) {
+        showError(err.message || "Model AI belum siap. Muat model terlebih dahulu sebelum menganalisis URL.");
+      } else {
+        console.error("URL analysis failed:", err);
+      }
     } finally {
       setScanningState(false);
     }
@@ -1003,8 +1034,10 @@
     switchDossierView("overview");
 
     // Reveal and scroll smoothly
-    DOM.diagnosticPanel.hidden = false;
-    DOM.diagnosticPanel.scrollIntoView({ behavior: "smooth", block: "start" });
+    DOM.diagnosticPanel.hidden = STATE.activeScannerTab !== "single";
+    if (!DOM.diagnosticPanel.hidden) {
+      DOM.diagnosticPanel.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
   }
 
   async function runDeepServerProbe(targetUrl) {
@@ -1297,6 +1330,7 @@
   }
 
   function resetScanView() {
+    STATE.lastDossier = null;
     DOM.diagnosticPanel.hidden = true;
     DOM.urlInput.value = "";
     handleUrlInput();
