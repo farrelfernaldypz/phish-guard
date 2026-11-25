@@ -72,3 +72,22 @@ def test_safe_unshortener_service():
     assert res["is_shortened_service"] is False
 
 
+def test_v2_fuzzy_typosquat_and_strip_scheme():
+    from backend.app.services.feature_extraction import extract_v2_tabular_features, strip_scheme
+    assert strip_scheme("HTTPS://Example.COM/Path") == "Example.COM/Path"
+    assert strip_scheme("http://portal.unsil.ac.id/info") == "portal.unsil.ac.id/info"
+
+    spoof_feats = extract_v2_tabular_features("https://g00gle-security.com/verify")
+    assert len(spoof_feats) == 26
+    assert spoof_feats["typosquat_similarity"] == 1.0
+    assert spoof_feats["is_official_brand"] == 0
+
+    official_feats = extract_v2_tabular_features("https://accounts.google.com/signin")
+    assert official_feats["is_official_brand"] == 1
+    assert official_feats["typosquat_similarity"] == 0.0
+
+    acad_feats = extract_v2_tabular_features("http://portal.unsil.ac.id/akademik?id=12")
+    assert acad_feats["is_official_tld"] == 1
+    assert acad_feats["query_length"] == len("id=12")
+
+

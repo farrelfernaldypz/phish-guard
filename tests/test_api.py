@@ -62,3 +62,11 @@ def test_prediction_works_with_a_valid_local_artifact(tmp_path, monkeypatch):
     assert result["model_name"] == "Test Classifier"
     assert result["processing_time_ms"] >= 0
 
+
+def test_metrics_endpoint_exposes_test_metrics():
+    response = client.get("/api/metrics")
+    if response.status_code == 200:
+        data = response.json()
+        assert "test_metrics" in data
+        assert data["test_metrics"]["accuracy"] > 0.90
+

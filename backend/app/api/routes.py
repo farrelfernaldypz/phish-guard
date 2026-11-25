@@ -20,7 +20,10 @@ def metrics() -> dict:
     if not EVALUATION_PATH.is_file():
         raise HTTPException(status_code=404, detail="Evaluation metrics are not available.")
     try:
-        return json.loads(EVALUATION_PATH.read_text(encoding="utf-8"))
+        payload = json.loads(EVALUATION_PATH.read_text(encoding="utf-8"))
+        if "test_metrics" not in payload and "test_metrics_phiusiil" in payload:
+            payload["test_metrics"] = payload["test_metrics_phiusiil"]
+        return payload
     except (OSError, json.JSONDecodeError) as error:
         raise HTTPException(status_code=503, detail="Evaluation metrics could not be loaded.") from error
 

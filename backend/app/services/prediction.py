@@ -7,7 +7,13 @@ warnings.filterwarnings("ignore", category=UserWarning, module="sklearn")
 import joblib
 import numpy as np
 from ..core.config import MODEL_PATH
-from .feature_extraction import FEATURE_NAMES, extract_features, extract_advanced_heuristics
+from .feature_extraction import (
+    FEATURE_NAMES,
+    extract_features,
+    extract_advanced_heuristics,
+    extract_v2_tabular_features,
+    strip_scheme,
+)
 from .unshortener import SafeUnshortener
 
 # Comprehensive registry of trusted, reputable, and official institutions
@@ -96,6 +102,7 @@ class PredictionService:
         if not target_path.is_file():
             candidates = [
                 target_path,
+                target_path.parent / "model_phishing_v2.pkl",
                 target_path.parent / "phishguard_model.joblib",
                 target_path.parent / "model_phishing.pkl",
                 target_path.parent / "model_phishing.joblib",
@@ -117,6 +124,8 @@ class PredictionService:
                     "threshold": threshold,
                     "algorithm": algorithm,
                     "metadata": loaded.get("metadata", {}),
+                    "tfidf_vectorizer": loaded.get("tfidf_vectorizer"),
+                    "tfidf_classifier": loaded.get("tfidf_classifier"),
                 }
             elif hasattr(loaded, "predict_proba"):
                 feature_names = getattr(loaded, "feature_names_in_", None)
@@ -130,6 +139,8 @@ class PredictionService:
                     "threshold": 0.5,
                     "algorithm": type(loaded).__name__,
                     "metadata": {"type": "raw_classifier", "source_file": target_path.name},
+                    "tfidf_vectorizer": None,
+                    "tfidf_classifier": None,
                 }
             else:
                 raise ValueError("Invalid model bundle format.")
@@ -175,12 +186,35 @@ class PredictionService:
         raw_host = (parsed.hostname or "").lower().rstrip(".")
 
         # 1. Extract accurate features for target URL
-        feature_map = extract_features(target_url, self.bundle["feature_names"])
-        advanced_heuristics = extract_advanced_heuristics(target_url)
-
-        # 2. Evaluate root domain baseline under canonical distribution
+        is_v2_bundle = (
+            self.bundle.get("tfidf_vectorizer") is not None
+            and self.bundle.get("tfidf_classifier") is not None
+        )
         canonical_url = canonicalize_for_model(target_url)
-        domain_feature_map = extract_features(canonical_url, self.bundle["feature_names"])
+
+        if is_v2_bundle:
+            tfidf_vec = self.bundle["tfidf_vectorizer"]
+            tfidf_clf = self.bundle["tfidf_classifier"]
+            tf_pos_idx = list(tfidf_clf.classes_).index(1)
+
+            raw_v2 = extract_v2_tabular_features(target_url)
+            raw_v2["tfidf_char_prob"] = round(
+                float(tfidf_clf.predict_proba(tfidf_vec.transform([strip_scheme(target_url)]))[0][tf_pos_idx]),
+                4,
+            )
+            feature_map = {name: raw_v2.get(name, 0) for name in self.bundle["feature_names"]}
+
+            dom_v2 = extract_v2_tabular_features(canonical_url)
+            dom_v2["tfidf_char_prob"] = round(
+                float(tfidf_clf.predict_proba(tfidf_vec.transform([strip_scheme(canonical_url)]))[0][tf_pos_idx]),
+                4,
+            )
+            domain_feature_map = {name: dom_v2.get(name, 0) for name in self.bundle["feature_names"]}
+        else:
+            feature_map = extract_features(target_url, self.bundle["feature_names"])
+            domain_feature_map = extract_features(canonical_url, self.bundle["feature_names"])
+
+        advanced_heuristics = extract_advanced_heuristics(target_url)
 
         import pandas as pd
         model = self.bundle["model"]
@@ -216,6 +250,7 @@ class PredictionService:
             feature_map.get("count_at", 0) > 0 or
             feature_map.get("has_ip", 0) > 0 or
             feature_map.get("has_ip_address", 0) > 0 or
+            feature_map.get("typosquat_similarity", 0) >= 0.80 or
             is_impersonating or
             advanced_heuristics.get("is_suspicious_tld", False) or
             advanced_heuristics.get("is_high_entropy_dga", False) or
@@ -258,6 +293,8 @@ class PredictionService:
         relevant = []
         if is_impersonating:
             relevant.append("brand_impersonation_spoofing")
+        if feature_map.get("typosquat_similarity", 0) >= 0.75 and not is_official_brand:
+            relevant.append("typosquatting_brand_similarity")
         if feature_map.get("has_ip") or feature_map.get("has_ip_address"):
             relevant.append("has_ip_address")
         if feature_map.get("has_punycode"):

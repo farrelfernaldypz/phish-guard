@@ -5,7 +5,9 @@ from __future__ import annotations
 import ipaddress
 import json
 import math
+import re
 from collections import Counter
+from difflib import SequenceMatcher
 from functools import lru_cache
 from pathlib import Path
 from urllib.parse import urlsplit
@@ -98,6 +100,7 @@ def extract_advanced_heuristics(url: str) -> dict[str, any]:
 
     # Indonesian threat lexicon matches
     matched_id_keywords = [kw for kw in indicators["indonesian_keywords"] if kw in lowered]
+    typosquat_sim, is_official_brand, has_brand_abuse = compute_brand_fuzzy(hostname, lowered)
 
     return {
         "shannon_entropy_host": host_entropy,
@@ -108,7 +111,130 @@ def extract_advanced_heuristics(url: str) -> dict[str, any]:
         "is_suspicious_tld": is_suspicious_tld,
         "indonesian_keywords_detected": matched_id_keywords,
         "indonesian_threat_count": len(matched_id_keywords),
+        "typosquat_similarity": typosquat_sim,
+        "is_official_brand": bool(is_official_brand),
+        "has_brand_abuse": bool(has_brand_abuse),
         "entropy_verdict": "High Randomness (DGA-like)" if is_dga_entropy else "Normal Linguistic Distribution"
+    }
+
+
+GLOBAL_SUSPICIOUS_KEYWORDS = [
+    "login", "verify", "account", "secure", "update", "signin",
+    "banking", "password", "wallet", "confirm", "recover", "suspended",
+    "webscr", "ebayisapi", "paypal", "credential"
+]
+
+OFFICIAL_BRANDS = {
+    "google": ["google.com", "google.co.id", "gmail.com"],
+    "bca": ["bca.co.id", "klikbca.com"],
+    "bri": ["bri.co.id", "ib.bri.co.id"],
+    "mandiri": ["bankmandiri.co.id", "livinbymandiri.id"],
+    "bni": ["bni.co.id"],
+    "dana": ["dana.id"],
+    "gopay": ["gopay.co.id", "gojek.com"],
+    "shopee": ["shopee.co.id", "shopeepay.co.id"],
+    "tokopedia": ["tokopedia.com"],
+    "paypal": ["paypal.com"],
+    "microsoft": ["microsoft.com", "live.com", "office.com"],
+    "apple": ["apple.com", "icloud.com"],
+    "detik": ["detik.com"],
+    "kompas": ["kompas.com"],
+}
+_OFFICIAL_DOMAINS_FLAT = {d for ds in OFFICIAL_BRANDS.values() for d in ds}
+_LEET_TABLE = str.maketrans("01345", "oieas")
+_CONFUSABLES_SET = set("\u0430\u0441\u0435\u043e\u0440\u0455\u0445\u0456\u0458\u0443")
+
+
+def strip_scheme(url: str) -> str:
+    """Remove http:// or https:// prefix for scheme-agnostic TF-IDF scoring."""
+    return re.sub(r"^https?://", "", str(url).strip(), flags=re.IGNORECASE)
+
+
+def compute_brand_fuzzy(host: str, full_lower: str) -> tuple[float, int, int]:
+    """Compute leetspeak-aware typosquatting similarity against official brand keywords."""
+    if not host:
+        return 0.0, 0, 0
+    h = host[4:] if host.startswith("www.") else host
+    is_official = int(any(h == d or h.endswith("." + d) for d in _OFFICIAL_DOMAINS_FLAT))
+    if is_official:
+        return 0.0, 1, 0
+
+    host_tokens = [t for t in re.split(r"[.\-_]", h) if len(t) >= 3]
+    best_sim = 0.0
+    brand_abuse = 0
+    for brand_key in OFFICIAL_BRANDS:
+        if brand_key in full_lower:
+            brand_abuse = 1
+        blen = len(brand_key)
+        for tok in host_tokens:
+            if abs(len(tok) - blen) > 3:
+                continue
+            norm_tok = tok.translate(_LEET_TABLE)
+            sim = max(
+                SequenceMatcher(None, tok, brand_key).ratio(),
+                SequenceMatcher(None, norm_tok, brand_key).ratio(),
+            )
+            if sim > best_sim:
+                best_sim = sim
+    return round(best_sim, 3), 0, brand_abuse
+
+
+def extract_v2_tabular_features(url: str) -> dict[str, int | float]:
+    """Extract the 26 deterministic v2 tabular & fuzzy features matching Colab v2 training."""
+    raw = str(url).strip()
+    lowered = raw.lower()
+    try:
+        parsed = urlsplit(raw if "://" in raw else f"//{raw}")
+        host = (parsed.hostname or "").rstrip(".").lower()
+        port = parsed.port
+        path = parsed.path or ""
+        query = parsed.query or ""
+    except (ValueError, UnicodeError):
+        host, port, path, query = "", None, "", ""
+
+    parts = host.split(".")
+    is_ip = 1 if len(parts) == 4 and all(p.isdigit() and 0 <= int(p) <= 255 for p in parts) else 0
+    subdomain_count = max(0, len([p for p in parts if p]) - 2)
+    indicators = _load_indicators()
+    susp_hits = sum(lowered.count(kw) for kw in GLOBAL_SUSPICIOUS_KEYWORDS)
+    indo_hits = sum(lowered.count(kw) for kw in indicators["indonesian_keywords"])
+    has_homograph = 1 if ("xn--" in host or any(c in _CONFUSABLES_SET for c in host)) else 0
+    tld = parts[-1] if parts else ""
+    is_suspicious_tld = 1 if tld in indicators["suspicious_tlds"] else 0
+    is_official_tld = 1 if (host.endswith(".ac.id") or host.endswith(".go.id") or tld in {"edu", "gov"}) else 0
+    is_shortener = 1 if any(host == s or host.endswith("." + s) for s in indicators["url_shorteners"]) else 0
+    has_port = 1 if port is not None else 0
+    host_entropy = calculate_shannon_entropy(host)
+    path_entropy = calculate_shannon_entropy(path)
+    typosquat_sim, is_official_brand, has_brand_abuse = compute_brand_fuzzy(host, lowered)
+
+    return {
+        "url_length": len(raw),
+        "hostname_length": len(host),
+        "path_length": len(path),
+        "count_dot": raw.count("."),
+        "count_hyphen": raw.count("-"),
+        "count_at": raw.count("@"),
+        "count_question": raw.count("?"),
+        "count_equal": raw.count("="),
+        "count_slash": raw.count("/"),
+        "count_digits": sum(c.isdigit() for c in raw),
+        "count_subdomains": subdomain_count,
+        "has_https": 1 if lowered.startswith("https://") else 0,
+        "has_ip": is_ip,
+        "has_port": has_port,
+        "shannon_entropy": host_entropy,
+        "has_homograph": has_homograph,
+        "is_suspicious_tld": is_suspicious_tld,
+        "has_url_shortener": is_shortener,
+        "suspicious_words": susp_hits,
+        "indonesian_keywords": indo_hits,
+        "query_length": len(query),
+        "path_entropy": path_entropy,
+        "is_official_tld": is_official_tld,
+        "typosquat_similarity": typosquat_sim,
+        "is_official_brand": is_official_brand,
+        "has_brand_abuse": has_brand_abuse,
     }
 
 def _extract_all_features(url: str) -> dict[str, int]:

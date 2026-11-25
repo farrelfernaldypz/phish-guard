@@ -145,6 +145,48 @@
       threshold: 1,
       unit: "bool",
       desc: "Identifies shortening services (bit.ly, s.id, tinyurl) used to bypass gateway email filters."
+    },
+    query_length: {
+      name: "Query String Length",
+      threshold: 45,
+      unit: "chars",
+      desc: "Length of query parameters after '?'. Extended tokens may encode phishing session states."
+    },
+    path_entropy: {
+      name: "Path Shannon Entropy",
+      threshold: 4.1,
+      unit: "bits/char",
+      desc: "Measures randomness inside the URL directory path independent of domain reputation."
+    },
+    is_official_tld: {
+      name: "Official Academic/Gov TLD",
+      isNeutral: true,
+      unit: "bool",
+      desc: "Flags verified educational or government top-level domains (.ac.id, .go.id, .edu, .gov)."
+    },
+    typosquat_similarity: {
+      name: "Brand Typosquat Similarity",
+      threshold: 0.75,
+      unit: "score",
+      desc: "Fuzzy leetspeak similarity (0.0-1.0) against protected enterprise brands (g00gle, paypa1)."
+    },
+    is_official_brand: {
+      name: "Verified Brand Host",
+      isNeutral: true,
+      unit: "bool",
+      desc: "Confirms exact match against known protected brand root domains."
+    },
+    has_brand_abuse: {
+      name: "Unapproved Brand Mention",
+      threshold: 1,
+      unit: "bool",
+      desc: "Brand keyword appears inside an unverified domain or path outside official ownership."
+    },
+    tfidf_char_prob: {
+      name: "Char N-Gram TF-IDF Score",
+      threshold: 0.5,
+      unit: "prob",
+      desc: "Subword 3-5 character n-gram phishing probability computed on scheme-stripped URL text."
     }
   };
 
@@ -407,6 +449,16 @@
         if (DOM.specFeatureDimensions && info.feature_names) {
           DOM.specFeatureDimensions.textContent = `${info.feature_names.length} Dimensions`;
         }
+        if (DOM.specTreesCount && info.metadata) {
+          if (info.metadata.version === "2.0-data-centric") {
+            DOM.specTreesCount.textContent = "LightGBM + TF-IDF";
+          } else if (info.metadata.n_estimators) {
+            DOM.specTreesCount.textContent = `${info.metadata.n_estimators} Trees`;
+          }
+        }
+        if (DOM.specDatasetName && info.metadata?.dataset) {
+          DOM.specDatasetName.textContent = info.metadata.dataset;
+        }
       }
     } catch {
       // Keep defaults
@@ -454,16 +506,17 @@
   }
 
   function renderTelemetryData(metrics) {
-    if (metrics.test_metrics) {
+    const testMetrics = metrics.test_metrics || metrics.test_metrics_phiusiil;
+    if (testMetrics) {
       animateKpis({
-        accuracy: metrics.test_metrics.accuracy * 100,
-        precision: metrics.test_metrics.precision * 100,
-        recall: metrics.test_metrics.recall * 100,
-        f1: metrics.test_metrics.f1_score * 100
+        accuracy: testMetrics.accuracy * 100,
+        precision: testMetrics.precision * 100,
+        recall: testMetrics.recall * 100,
+        f1: testMetrics.f1_score * 100
       });
 
-      if (DOM.specLatencyP50 && metrics.test_metrics.latency_p50_ms) {
-        DOM.specLatencyP50.textContent = `${metrics.test_metrics.latency_p50_ms} ms`;
+      if (DOM.specLatencyP50 && testMetrics.latency_p50_ms) {
+        DOM.specLatencyP50.textContent = `${testMetrics.latency_p50_ms} ms`;
       }
     }
 
@@ -943,7 +996,9 @@
         }
         reasons.push("🏢 <strong>Domain Sah Terdaftar:</strong> Alamat situs menggunakan domain standar yang tidak meniru merek resmi lain.");
         reasons.push("✨ <strong>Bebas Dari Parameter Berbahaya:</strong> Tidak ditemukan kode pengelabuan homograf, pemendek link jebakan, atau manipulasi direktori.");
-        reasons.push(`🤖 <strong>Keputusan Model AI (20 Golden Features):</strong> Diverifikasi aman oleh 150 Decision Trees dengan skor risiko hanya ${scorePct}%.`);
+        const featCount = Object.keys(features).length || 27;
+        const modelLabel = escapeHtml(data.model_name || "PhishGuard AI");
+        reasons.push(`🤖 <strong>Keputusan Model AI (${featCount} Fitur):</strong> Diverifikasi aman oleh ${modelLabel} dengan skor risiko hanya ${scorePct}%.`);
       }
 
       reasons.forEach((rText) => {
@@ -1284,10 +1339,13 @@
     DOM.featuresGridContainer.replaceChildren();
 
     Object.entries(FEATURE_SPECS).forEach(([key, spec]) => {
+      if (!(key in features) && spec.isNeutral) return;
       const val = features[key] ?? 0;
       let isWarn = false;
 
-      if (spec.unit === "bool") {
+      if (spec.isNeutral) {
+        isWarn = false;
+      } else if (spec.unit === "bool") {
         isWarn = spec.isReverse ? val === 0 : val === 1;
       } else {
         isWarn = val >= spec.threshold;
@@ -1296,6 +1354,8 @@
       let displayVal = val;
       if (spec.unit === "bool") {
         displayVal = val === 1 ? "Present" : "Absent";
+      } else if (typeof val === "number" && !Number.isInteger(val)) {
+        displayVal = val.toFixed(3);
       }
 
       const card = document.createElement("div");
