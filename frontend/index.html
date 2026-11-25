@@ -95,6 +95,35 @@
     </div>
   </header>
 
+  <nav class="mobile-bottom-nav" aria-label="Mobile primary navigation">
+    <a href="#scanner" class="nav-link active" data-view="scanner" aria-label="Scanner">
+      <svg aria-hidden="true" viewBox="0 0 24 24">
+        <circle cx="11" cy="11" r="7"></circle>
+        <path d="m16 16 4 4"></path>
+      </svg>
+      <span>Scanner</span>
+    </a>
+    <a href="#telemetry" class="nav-link" data-view="telemetry" aria-label="Telemetry">
+      <svg aria-hidden="true" viewBox="0 0 24 24">
+        <path d="M3 12h4l3-7 4 14 3-7h4"></path>
+      </svg>
+      <span>Telemetry</span>
+    </a>
+    <a href="#audit-log" class="nav-link" data-view="audit-log" aria-label="Audit Log">
+      <svg aria-hidden="true" viewBox="0 0 24 24">
+        <path d="M8 6h12M8 12h12M8 18h12"></path>
+        <path d="M3 6h.01M3 12h.01M3 18h.01"></path>
+      </svg>
+      <span>Audit Log</span>
+    </a>
+    <a href="#api-reference" class="nav-link" data-view="api-reference" aria-label="API Specs">
+      <svg aria-hidden="true" viewBox="0 0 24 24">
+        <path d="m8 8-4 4 4 4M16 8l4 4-4 4M14 5l-4 14"></path>
+      </svg>
+      <span>API Specs</span>
+    </a>
+  </nav>
+
   <main id="home">
     <!-- Hero & Scanner Section -->
     <section class="hero-section app-view-section active" id="scanner">
@@ -640,7 +669,7 @@
             <span class="kpi-caption">BENCHMARK ACCURACY</span>
             <div class="kpi-val-row">
               <span class="kpi-value" data-target="96.82">0.00%</span>
-              <span class="kpi-badge-gold">Top Tier</span>
+              <span class="kpi-badge-gold"><span class="kpi-badge-dot" aria-hidden="true"></span>Top Tier</span>
             </div>
             <div class="kpi-bar-track">
               <div class="kpi-bar-fill" style="width: 96.82%"></div>
@@ -652,7 +681,7 @@
             <span class="kpi-caption">CLASSIFICATION PRECISION</span>
             <div class="kpi-val-row">
               <span class="kpi-value" data-target="95.74">0.00%</span>
-              <span class="kpi-badge-subtle">Low False Positives</span>
+              <span class="kpi-badge-subtle"><span class="kpi-badge-dot" aria-hidden="true"></span>Low False Positives</span>
             </div>
             <div class="kpi-bar-track">
               <div class="kpi-bar-fill" style="width: 95.74%"></div>
@@ -664,7 +693,7 @@
             <span class="kpi-caption">THREAT RECALL SENSITIVITY</span>
             <div class="kpi-val-row">
               <span class="kpi-value" data-target="97.31">0.00%</span>
-              <span class="kpi-badge-subtle">High Catch Rate</span>
+              <span class="kpi-badge-subtle"><span class="kpi-badge-dot" aria-hidden="true"></span>High Catch Rate</span>
             </div>
             <div class="kpi-bar-track">
               <div class="kpi-bar-fill" style="width: 97.31%"></div>
@@ -676,7 +705,7 @@
             <span class="kpi-caption">HARMONIC F1-SCORE</span>
             <div class="kpi-val-row">
               <span class="kpi-value" data-target="96.52">0.00%</span>
-              <span class="kpi-badge-gold">Optimal Balance</span>
+              <span class="kpi-badge-gold"><span class="kpi-badge-dot" aria-hidden="true"></span>Optimal Balance</span>
             </div>
             <div class="kpi-bar-track">
               <div class="kpi-bar-fill" style="width: 96.52%"></div>
@@ -909,10 +938,18 @@
 
         <div class="footer-links-col">
           <span class="footer-col-title">Security Governance</span>
-          <span class="footer-static-item">Air-Gapped Processing</span>
-          <span class="footer-static-item">Zero Outbound Egress</span>
-          <span class="footer-static-item">Local ML Inference</span>
-          <span class="footer-static-item">RFC 3986 Normalization</span>
+          <span class="footer-static-item">
+            <span aria-hidden="true">🛡️</span>Air-Gapped Processing
+          </span>
+          <span class="footer-static-item">
+            <span aria-hidden="true">🔒</span>Zero Outbound Egress
+          </span>
+          <span class="footer-static-item">
+            <span aria-hidden="true">⚡</span>Local ML Inference
+          </span>
+          <span class="footer-static-item">
+            <span aria-hidden="true">📜</span>RFC 3986 Normalization
+          </span>
         </div>
       </div>
 
